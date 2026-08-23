@@ -167,6 +167,1948 @@ tr.changed input{border-color:var(--amber)}
 .metaLoadBtn:hover{background:color-mix(in srgb, var(--accent) 12%, transparent)}
 </style>
 </head>
+<body data-theme="dark">
+<aside>
+  <div class="brand">UPTIME <span>Editor</span></div>
+  <nav id="nav">
+    <button data-tab="devices" class="active" data-i18n="nav.devices">Devices</button>
+    <button data-tab="rackview" data-i18n="nav.rackview">Rack View</button>
+    <button data-tab="network" data-i18n="nav.network">Network</button>
+    <button data-tab="customers" data-i18n="nav.customers">Customers</button>
+    <button data-tab="player" data-i18n="nav.player">Player</button>
+    <button data-tab="repair" data-i18n="nav.repair">Repair</button>
+    <button data-tab="tuning" data-i18n="nav.tuning">Tuning</button>
+    <button data-tab="stats" data-i18n="nav.stats">Statistics</button>
+  </nav>
+  <div class="spacer"></div>
+  <button id="langToggle" style="margin-bottom:6px">EN</button>
+  <button id="themeToggle" data-dark-label="Dark Mode" data-light-label="Light Mode">Dark Mode</button>
+</aside>
+<div class="mainwrap">
+  <div class="topbar centered" id="topbar">
+    <label class="drop big" id="drop">
+      <span data-i18n="drop.title">Open savegame</span>
+      <span class="sub" data-i18n="drop.sub">Drop your .save file here or click to browse</span>
+      <input type="file" id="file" accept=".save,.json" multiple>
+    </label>
+    <div class="fileinfo" id="fileinfo">
+      <span class="fname" id="fname"></span>
+      <span id="fsize" style="color:var(--dim)"></span>
+      <span class="meta" id="fmeta"></span>
+    </div>
+    <div class="fileinfo" id="loadStatusBar" style="margin-top:10px;display:none">
+      <span class="statusBadge" id="saveStatusBadge"></span>
+      <span class="statusBadge" id="metaStatusBadge"></span>
+    </div>
+  </div>
+  <main>
+<!-- DEVICES -->
+  <div class="tab active" id="tab-devices">
+    <div class="toolbar" id="devToolbar" style="display:none">
+      <span class="lbl" data-i18n="devices.prefix">Prefix</span>
+      <input type="text" id="prefix" value="AZ_01_">
+      <button id="applyPrefix" data-i18n="devices.applyPrefix">Apply prefix to selection</button>
+      <button id="stripPrefix" data-i18n="devices.stripPrefix">Strip prefix from selection</button>
+      <label class="chk"><input type="checkbox" id="syncPlain" checked> <span data-i18n="devices.syncPlain">sync display_name_plain</span></label>
+      <label class="chk"><input type="checkbox" id="selAll" checked> <span data-i18n="common.selectAll">select all</span></label>
+    </div>
+    <div id="devGroups"></div>
+  </div>
+
+  <!-- RACK VIEW -->
+  <div class="tab" id="tab-rackview">
+    <div id="rackViewInfo" class="hint" style="margin-bottom:12px"></div>
+    <div id="rackView" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px"></div>
+  </div>
+
+  <div class="tab" id="tab-network">
+    <div class="panel">
+      <h3 data-i18n="network.overview">OVERVIEW</h3>
+      <div class="grid" id="netOverview"></div>
+    </div>
+    <div class="panel">
+      <h3 data-i18n="network.sparklines">SPARKLINES (LIVE TICKS)</h3>
+      <div id="netSpark" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px"></div>
+    </div>
+    <div class="panel">
+      <h3 data-i18n="network.liveLoad">LIVE LOAD PER DEVICE</h3>
+      <div id="netDeviceLoad"></div>
+    </div>
+    <div class="panel">
+      <h3 data-i18n="network.topTraffic">TOP PORTS BY TRAFFIC</h3>
+      <div id="netTopTraffic"></div>
+    </div>
+    <div class="panel">
+      <h3 data-i18n="network.topErrors">TOP PORTS BY ERRORS / LINK FLAPS</h3>
+      <div id="netTopErrors"></div>
+    </div>
+    <div class="panel">
+      <h3 data-i18n="network.vrfSubnets">VRFS &amp; SUBNETS</h3>
+      <div id="netVrf"></div>
+    </div>
+  </div>
+
+  <!-- CUSTOMERS -->
+  <div class="tab" id="tab-customers">
+    <div class="toolbar" id="custToolbar" style="display:none">
+      <button id="custHealth" data-i18n="customers.health">health = 1.0 (selection)</button>
+      <button id="custProbation" data-i18n="customers.clearProbation">Clear probation (selection)</button>
+      <button id="custSla" data-i18n="customers.slaZero">SLA credits = 0 (selection)</button>
+      <span class="lbl">price_multiplier</span>
+      <input type="number" id="custMultVal" step="0.1" value="1.0" style="width:80px">
+      <button id="custMult" data-i18n="customers.setSelection">Set (selection)</button>
+      <label class="chk"><input type="checkbox" id="custSelAll" checked> <span data-i18n="common.selectAll">select all</span></label>
+    </div>
+    <div id="custTable"></div>
+  </div>
+
+  <!-- PLAYER -->
+  <div class="tab" id="tab-player">
+    <div class="panel">
+      <h3 data-i18n="player.financesStats">FINANCES &amp; STATS</h3>
+      <div class="grid" id="playerGrid"></div>
+    </div>
+  </div>
+
+  <!-- REPAIR -->
+  <div class="tab" id="tab-repair">
+    <div class="panel">
+      <h3 data-i18n="repair.oneClickFixes">ONE-CLICK FIXES</h3>
+      <div id="repairList" style="display:grid;gap:10px"></div>
+      <p class="hint" data-i18n="repair.hint">Changes are applied on download.</p>
+    </div>
+  </div>
+
+  <!-- TUNING -->
+  <div class="tab" id="tab-tuning">
+    <input type="text" class="search" id="tuningSearch" data-i18n-placeholder="tuning.filterPlaceholder" placeholder="Filterâ€¦ (e.g. rep_, health, failure)">
+    <span class="stat" id="tuningCount"></span>
+    <div id="tuningList"></div>
+    <p class="hint" data-i18n="tuning.hint">Written to config.tuning AND base_config.tuning.</p>
+  </div>
+
+  <!-- STATISTICS -->
+  <div class="tab" id="tab-stats">
+    <div class="panel">
+      <h3 data-i18n="stats.lifetimeTotals">LIFETIME TOTALS (cosmetic, in $)</h3>
+      <div class="grid" id="statsGrid"></div>
+    </div>
+  </div>
+
+
+    <button class="primary" id="downloadBtn" data-i18n="downloadBtn">Download patched .save</button>
+  </main>
+</div>
+
+<!-- meta.json load popup (opens automatically after loading the .save) -->
+<div class="modal-overlay" id="loadMetaModalOverlay">
+  <div class="modal">
+    <h3 data-i18n="loadMeta.title">Load meta.json</h3>
+    <p class="desc" data-i18n="loadMeta.desc">The matching <code>meta.json</code> is needed to set the in-game save name (load screen). When using drag &amp; drop, the editor automatically looks for a same-named file in the same folder.</p>
+    <div id="loadModalMetaState"></div>
+    <label class="metaLoadBtn">
+      <span data-i18n="loadMeta.manual">ðŸ“„ Load meta.json manually</span>
+      <input type="file" id="loadModalMetaFile" accept=".json" style="display:none">
+    </label>
+    <div class="actions">
+      <button class="primary" id="loadModalContinueBtn" data-i18n="loadMeta.continue">Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- Save-Name popup -->
+<div class="modal-overlay" id="nameModalOverlay">
+  <div class="modal">
+    <h3 data-i18n="nameModal.title">What should this savegame be called in-game?</h3>
+    <p class="desc" data-i18n="nameModal.desc">The name is stored in the <code>meta.json</code> (field <code>note</code>) â€” the game shows it as the save title on the load screen.</p>
+    <div id="modalMetaState"></div>
+    <label class="metaLoadBtn" style="margin-bottom:16px">
+      <span data-i18n="loadMeta.manual">ðŸ“„ Load meta.json manually</span>
+      <input type="file" id="modalMetaFile" accept=".json" style="display:none">
+    </label>
+    <div class="field">
+      <label data-i18n="nameModal.label">Save name</label>
+      <input type="text" id="modalNoteInput" disabled data-i18n-placeholder="nameModal.placeholder" placeholder="load meta.json firstâ€¦">
+    </div>
+    <div class="actions">
+      <button id="modalCancelBtn" data-i18n="nameModal.cancel">Cancel</button>
+      <button class="primary" id="modalConfirmBtn" data-i18n="nameModal.confirm">Download</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ============ MessagePack Codec ============
+class F { constructor(v){ this.v = v; } }
+
+function mpDecode(buf, pos) {
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  const td = new TextDecoder();
+  function rd(p) {
+    const b = buf[p]; p++;
+    if (b <= 0x7f) return [b, p];
+    if (b >= 0xe0) return [b - 0x100, p];
+    if (b >= 0x80 && b <= 0x8f) return rmap(p, b & 15);
+    if (b >= 0x90 && b <= 0x9f) return rarr(p, b & 15);
+    if (b >= 0xa0 && b <= 0xbf) { const n = b & 31; return [td.decode(buf.subarray(p, p+n)), p+n]; }
+    switch (b) {
+      case 0xc0: return [null, p];
+      case 0xc2: return [false, p];
+      case 0xc3: return [true, p];
+      case 0xc4: { const n = buf[p]; p++; return [buf.slice(p, p+n), p+n]; }
+      case 0xc5: { const n = dv.getUint16(p); p += 2; return [buf.slice(p, p+n), p+n]; }
+      case 0xc6: { const n = dv.getUint32(p); p += 4; return [buf.slice(p, p+n), p+n]; }
+      case 0xca: return [new F(dv.getFloat32(p)), p+4];
+      case 0xcb: return [new F(dv.getFloat64(p)), p+8];
+      case 0xcc: return [buf[p], p+1];
+      case 0xcd: return [dv.getUint16(p), p+2];
+      case 0xce: return [dv.getUint32(p), p+4];
+      case 0xcf: return [dv.getBigUint64(p), p+8];
+      case 0xd0: return [dv.getInt8(p), p+1];
+      case 0xd1: return [dv.getInt16(p), p+2];
+      case 0xd2: return [dv.getInt32(p), p+4];
+      case 0xd3: return [dv.getBigInt64(p), p+8];
+      case 0xd9: { const n = buf[p]; p++; return [td.decode(buf.subarray(p, p+n)), p+n]; }
+      case 0xda: { const n = dv.getUint16(p); p += 2; return [td.decode(buf.subarray(p, p+n)), p+n]; }
+      case 0xdb: { const n = dv.getUint32(p); p += 4; return [td.decode(buf.subarray(p, p+n)), p+n]; }
+      case 0xdc: { const n = dv.getUint16(p); return rarr(p+2, n); }
+      case 0xdd: { const n = dv.getUint32(p); return rarr(p+4, n); }
+      case 0xde: { const n = dv.getUint16(p); return rmap(p+2, n); }
+      case 0xdf: { const n = dv.getUint32(p); return rmap(p+4, n); }
+    }
+    throw new Error('Unknown marker 0x' + b.toString(16) + ' @' + (p-1));
+  }
+  function rarr(p, n) { const a = []; for (let i = 0; i < n; i++) { const [v, q] = rd(p); a.push(v); p = q; } return [a, p]; }
+  function rmap(p, n) { const m = new Map(); for (let i = 0; i < n; i++) { let k, v, q; [k, q] = rd(p); [v, p] = rd(q); m.set(k, v); } return [m, p]; }
+  return rd(pos);
+}
+
+function mpEncode(o) {
+  const chunks = []; let total = 0;
+  const te = new TextEncoder();
+  function push(u8) { chunks.push(u8); total += u8.length; }
+  function b(...xs) { push(Uint8Array.from(xs)); }
+  function u16(m, n) { const u = new Uint8Array(3); u[0] = m; new DataView(u.buffer).setUint16(1, n); push(u); }
+  function u32(m, n) { const u = new Uint8Array(5); u[0] = m; new DataView(u.buffer).setUint32(1, n); push(u); }
+  function enc(o) {
+    if (o === null || o === undefined) return b(0xc0);
+    if (o === true) return b(0xc3);
+    if (o === false) return b(0xc2);
+    if (o instanceof F) { const u = new Uint8Array(9); u[0] = 0xcb; new DataView(u.buffer).setFloat64(1, o.v); return push(u); }
+    if (typeof o === 'bigint') {
+      const u = new Uint8Array(9);
+      if (o >= 0n) { u[0] = 0xcf; new DataView(u.buffer).setBigUint64(1, o); }
+      else { u[0] = 0xd3; new DataView(u.buffer).setBigInt64(1, o); }
+      return push(u);
+    }
+    if (typeof o === 'number') {
+      if (!Number.isInteger(o)) { const u = new Uint8Array(9); u[0] = 0xcb; new DataView(u.buffer).setFloat64(1, o); return push(u); }
+      if (o >= 0) {
+        if (o <= 0x7f) return b(o);
+        if (o <= 0xff) return b(0xcc, o);
+        if (o <= 0xffff) return u16(0xcd, o);
+        if (o <= 0xffffffff) return u32(0xce, o);
+        return enc(BigInt(o));
+      }
+      if (o >= -32) return b(o & 0xff);
+      if (o >= -128) return b(0xd0, o & 0xff);
+      if (o >= -32768) { const u = new Uint8Array(3); u[0] = 0xd1; new DataView(u.buffer).setInt16(1, o); return push(u); }
+      if (o >= -2147483648) { const u = new Uint8Array(5); u[0] = 0xd2; new DataView(u.buffer).setInt32(1, o); return push(u); }
+      return enc(BigInt(o));
+    }
+    if (typeof o === 'string') {
+      const e = te.encode(o); const n = e.length;
+      if (n <= 31) b(0xa0 | n); else if (n <= 0xff) b(0xd9, n); else if (n <= 0xffff) u16(0xda, n); else u32(0xdb, n);
+      return push(e);
+    }
+    if (o instanceof Uint8Array) {
+      const n = o.length;
+      if (n <= 0xff) b(0xc4, n); else if (n <= 0xffff) u16(0xc5, n); else u32(0xc6, n);
+      return push(o);
+    }
+    if (Array.isArray(o)) {
+      const n = o.length;
+      if (n <= 15) b(0x90 | n); else if (n <= 0xffff) u16(0xdc, n); else u32(0xdd, n);
+      for (const x of o) enc(x);
+      return;
+    }
+    if (o instanceof Map) {
+      const n = o.size;
+      if (n <= 15) b(0x80 | n); else if (n <= 0xffff) u16(0xde, n); else u32(0xdf, n);
+      for (const [k, v] of o) { enc(k); enc(v); }
+      return;
+    }
+    throw new Error('Not encodable: ' + typeof o);
+  }
+  enc(o);
+  const out = new Uint8Array(total); let off = 0;
+  for (const c of chunks) { out.set(c, off); off += c.length; }
+  return out;
+}
+
+// ============ i18n ============
+const I18N = {
+  en: {
+    'loadMeta.title': 'Load meta.json',
+    'loadMeta.desc': 'The matching <code>meta.json</code> is needed to set the in-game save name (load screen). When using drag &amp; drop, the editor automatically looks for a same-named file in the same folder.',
+    'loadMeta.manual': 'ðŸ“„ Load meta.json manually',
+    'loadMeta.continue': 'Continue',
+    'nameModal.title': 'What should this savegame be called in-game?',
+    'nameModal.desc': 'The name is stored in the <code>meta.json</code> (field <code>note</code>) â€” the game shows it as the save title on the load screen.',
+    'nameModal.label': 'Save name',
+    'nameModal.placeholder': 'load meta.json firstâ€¦',
+    'nameModal.cancel': 'Cancel',
+    'nameModal.confirm': 'Download',
+    'status.saveLoaded': 'Save loaded: {0}',
+    'status.metaSearching': 'meta.json: searchingâ€¦',
+    'status.metaNotFound': 'meta.json not found',
+    'meta.loadedAuto': 'meta.json loaded: {0}',
+    'meta.foundAuto': 'found automatically in the same folder',
+    'meta.loadedManual': 'loaded manually',
+    'meta.searching': 'Searching for a matching meta.jsonâ€¦',
+    'meta.notFoundTitle': 'No meta.json found',
+    'meta.notFoundSub': 'please load it manually below',
+    'alert.metaLoadError': 'Error loading meta.json: {0}',
+    'alert.nicUpgrade': 'NIC upgrade: added {0} Sfp28 25G module(s) ({1} ports) across {2} hosts checked.',
+    'alert.nic10g': 'NIC conversion: set {0} SFP+ 10G module(s) ({1} ports) across {2} hosts checked.',
+    'alert.notUptimeSave': 'Not an Uptime save',
+    'alert.errorLoading': 'Error loading: {0}',
+    'alert.errorEncoding': 'Error encoding: {0}',
+
+    'nav.devices': 'Devices', 'nav.rackview': 'Rack View', 'nav.network': 'Network',
+    'nav.customers': 'Customers', 'nav.player': 'Player', 'nav.repair': 'Repair',
+    'nav.tuning': 'Tuning', 'nav.stats': 'Statistics',
+    'drop.title': 'Open savegame',
+    'drop.sub': 'Drop your .save file here or click to browse',
+    'reloadBtn': 'Load another file',
+    'fileinfo.summary': 'Scenario {0} Â· Site {1} Â· {2} devices/objects Â· {3} customers',
+
+    'devices.prefix': 'Prefix',
+    'devices.applyPrefix': 'Apply prefix to selection',
+    'devices.stripPrefix': 'Strip prefix from selection',
+    'devices.syncPlain': 'sync display_name_plain',
+    'common.selectAll': 'select all',
+    'devices.th.id': 'ID', 'devices.th.az': 'AZ', 'devices.th.name': 'Name', 'devices.th.rack': 'Rack', 'devices.th.uheight': 'U-position',
+    'devices.th.plain': 'display_name_plain',
+    'group.hosts': 'HOSTS', 'group.switches': 'SWITCHES', 'group.gateways': 'GATEWAYS',
+    'group.edds': 'EDDS / PATCH', 'group.appliances': 'SECURITY APPLIANCES', 'group.racks': 'RACKS',
+    'group.azs': 'AVAILABILITY ZONES', 'group.regions': 'REGIONS',
+
+    'rackview.summary': '{0} racks{1}',
+    'rackview.unplaced': ' Â· {0} devices without rack placement (virtual/addon)',
+    'rackview.fill': '{0} / {1} U used Â· {2} devices',
+
+    'network.overview': 'OVERVIEW', 'network.sparklines': 'SPARKLINES (LIVE TICKS)',
+    'network.liveLoad': 'LIVE LOAD PER DEVICE', 'network.topTraffic': 'TOP PORTS BY TRAFFIC',
+    'network.topErrors': 'TOP PORTS BY ERRORS / LINK FLAPS', 'network.vrfSubnets': 'VRFS &amp; SUBNETS',
+    'network.egressTotal': 'Egress (total)', 'network.ingressTotal': 'Ingress (total)',
+    'network.backboneLoad': 'Backbone Load', 'network.uplinkSaturated': 'Uplink Saturated',
+    'network.activeDdos': 'Active DDoS', 'network.breachProgress': 'Breach Progress',
+    'network.breachTarget': 'Breach Target', 'network.breachWarned': 'Breach Warned',
+    'network.totalPorts': 'Total Ports', 'network.totalCables': 'Total Cables',
+    'common.yes': 'YES', 'common.no': 'No',
+    'spark.rps': 'Requests/s (live)', 'spark.uplinkCap': 'Uplink Capacity (live, Gbps)',
+    'spark.repPct': 'Reputation % (live, /65535)', 'spark.dropped': 'Dropped/s (attacks)',
+    'spark.scrubbed': 'Scrubbed (Gbps)', 'spark.activeDdosTrend': 'Active DDoS (trend, Gbps)',
+    'network.noLiveLoad': 'No devices with live-load fields found.',
+    'network.th.device': 'Device', 'network.th.egress': 'Egress', 'network.th.ingress': 'Ingress',
+    'network.th.fabric': 'Fabric', 'network.th.saturated': 'Saturated',
+    'network.noTraffic': 'No traffic counters &gt; 0 in this save (counters may not be populated yet).',
+    'network.th.port': 'Port', 'network.th.kind': 'Kind', 'network.th.capacity': 'Capacity',
+    'network.th.totalTraffic': 'Total Traffic',
+    'network.noErrors': 'No ports with errors or link flaps.',
+    'network.th.errors': 'Errors', 'network.th.linkFlaps': 'Link Flaps',
+    'network.th.vrfId': 'VRF ID', 'network.th.l3vni': 'L3VNI', 'network.th.managed': 'Managed',
+    'network.th.uncontended': 'Uncontended', 'network.th.subnetId': 'Subnet ID',
+    'network.th.l2vni': 'L2VNI', 'network.th.vrf': 'VRF', 'network.th.class': 'Class',
+
+    'customers.health': 'health = 1.0 (selection)', 'customers.clearProbation': 'Clear probation (selection)',
+    'customers.slaZero': 'SLA credits = 0 (selection)', 'customers.setSelection': 'Set (selection)',
+    'customers.th.id': 'ID', 'customers.th.name': 'Name', 'customers.th.archetype': 'Archetype',
+    'customers.th.health': 'health', 'customers.th.priceMult': 'price_mult',
+    'customers.th.probation': 'Probation', 'customers.th.sla': 'SLA Credits',
+
+    'player.financesStats': 'FINANCES &amp; STATS',
+    'player.cash': 'Cash ($)', 'player.reputation': 'Reputation (0â€“1)', 'player.skill': 'Player Skill',
+    'player.difficulty': 'Difficulty', 'player.churnLock': 'Churn Lock (customers locked)',
+    'player.bailoutAvailable': 'Bailout available', 'player.bailoutsTaken': 'Bailouts taken',
+    'player.maxProspects': 'Max Prospects',
+
+    'repair.oneClickFixes': 'ONE-CLICK FIXES', 'repair.hint': 'Changes are applied on download.',
+    'repair.clearIncidents': 'Clear active incidents', 'repair.releaseMaintenance': 'Release maintenance hosts',
+    'repair.resetOvertemp': 'Reset over-temperature', 'repair.clearSiem': 'Clear SIEM storage (TB)',
+    'repair.clearChurn': 'Clear churn history &amp; rep loss',
+    'repair.upgradeNics': 'Upgrade all host NICs to 25G Sfp28 (fills up to 2 modules)',
+    'repair.convertNics10g': 'Set all host NICs to 10G SFP+ (fills up to 2 modules)',
+    'repair.hostNicStatus': '{0} / {1} hosts',
+    'repair.current': 'current: {0}',
+
+    'tuning.filterPlaceholder': 'Filterâ€¦ (e.g. rep_, health, failure)',
+    'tuning.hint': 'Written to config.tuning AND base_config.tuning.',
+    'tuning.notFound': 'config.tuning not found',
+    'tuning.th.parameter': 'Parameter', 'tuning.th.value': 'Value',
+    'tuning.countAll': '{0} parameters', 'tuning.countFiltered': '{0} / {1} parameters',
+
+    'stats.lifetimeTotals': 'LIFETIME TOTALS (cosmetic, in $)',
+    'stats.totalRevenue': 'Total Revenue', 'stats.recurringRevenue': 'Recurring Revenue',
+    'stats.oneTimeRevenue': 'One-time Revenue', 'stats.totalCost': 'Total Cost',
+    'stats.noncashCost': 'Non-cash Cost', 'stats.totalCapex': 'Total CAPEX',
+    'stats.depreciation': 'Depreciation', 'stats.assetDisposals': 'Asset Disposals',
+    'stats.totalFinancing': 'Total Financing',
+
+    'downloadBtn': 'Download patched .save',
+  },
+  de: {
+    'loadMeta.title': 'meta.json laden',
+    'loadMeta.desc': 'Damit der Save-Name im Spiel (Lade-Bildschirm) gesetzt werden kann, wird die zugehÃ¶rige <code>meta.json</code> benÃ¶tigt. Bei Drag&amp;Drop wird automatisch nach der gleichnamigen Datei im selben Ordner gesucht.',
+    'loadMeta.manual': 'ðŸ“„ meta.json manuell laden',
+    'loadMeta.continue': 'Weiter',
+    'nameModal.title': 'Wie soll das Savegame im Spiel heiÃŸen?',
+    'nameModal.desc': 'Der Name wird in der <code>meta.json</code> (Feld <code>note</code>) gespeichert â€” das Spiel zeigt ihn im Lade-Bildschirm als Save-Titel an.',
+    'nameModal.label': 'Save-Name',
+    'nameModal.placeholder': 'erst meta.json ladenâ€¦',
+    'nameModal.cancel': 'Abbrechen',
+    'nameModal.confirm': 'Herunterladen',
+    'status.saveLoaded': 'Save geladen: {0}',
+    'status.metaSearching': 'meta.json wird gesuchtâ€¦',
+    'status.metaNotFound': 'meta.json nicht gefunden',
+    'meta.loadedAuto': 'meta.json geladen: {0}',
+    'meta.foundAuto': 'automatisch im selben Ordner gefunden',
+    'meta.loadedManual': 'manuell geladen',
+    'meta.searching': 'Suche automatisch nach passender meta.jsonâ€¦',
+    'meta.notFoundTitle': 'Keine meta.json gefunden',
+    'meta.notFoundSub': 'bitte unten manuell laden',
+    'alert.metaLoadError': 'Fehler beim Laden der meta.json: {0}',
+    'alert.nicUpgrade': 'NIC-Upgrade: {0} Sfp28-25G-Module ({1} Ports) ergÃ¤nzt (von {2} Hosts geprÃ¼ft).',
+    'alert.nic10g': 'NIC-Konvertierung: {0} SFP+-10G-Module ({1} Ports) gesetzt (von {2} Hosts geprÃ¼ft).',
+    'alert.notUptimeSave': 'Keine gÃ¼ltige Uptime-Save-Datei',
+    'alert.errorLoading': 'Fehler beim Laden: {0}',
+    'alert.errorEncoding': 'Fehler beim Kodieren: {0}',
+
+    'nav.devices': 'GerÃ¤te', 'nav.rackview': 'Rack-Ansicht', 'nav.network': 'Netzwerk',
+    'nav.customers': 'Kunden', 'nav.player': 'Spieler', 'nav.repair': 'Reparatur',
+    'nav.tuning': 'Tuning', 'nav.stats': 'Statistik',
+    'drop.title': 'Savegame Ã¶ffnen',
+    'drop.sub': '.save-Datei hier ablegen oder klicken zum Durchsuchen',
+    'reloadBtn': 'Andere Datei laden',
+    'fileinfo.summary': 'Szenario {0} Â· Standort {1} Â· {2} GerÃ¤te/Objekte Â· {3} Kunden',
+
+    'devices.prefix': 'PrÃ¤fix',
+    'devices.applyPrefix': 'PrÃ¤fix auf Auswahl anwenden',
+    'devices.stripPrefix': 'PrÃ¤fix aus Auswahl entfernen',
+    'devices.syncPlain': 'display_name_plain synchronisieren',
+    'common.selectAll': 'alle auswÃ¤hlen',
+    'devices.th.id': 'ID', 'devices.th.az': 'AZ', 'devices.th.name': 'Name', 'devices.th.rack': 'Rack', 'devices.th.uheight': 'U-Position',
+    'devices.th.plain': 'display_name_plain',
+    'group.hosts': 'HOSTS', 'group.switches': 'SWITCHES', 'group.gateways': 'GATEWAYS',
+    'group.edds': 'EDDS / PATCH', 'group.appliances': 'SECURITY APPLIANCES', 'group.racks': 'RACKS',
+    'group.azs': 'VERFÃœGBARKEITSZONEN', 'group.regions': 'REGIONEN',
+
+    'rackview.summary': '{0} Racks{1}',
+    'rackview.unplaced': ' Â· {0} GerÃ¤te ohne Rack-Platzierung (virtuell/Zusatz)',
+    'rackview.fill': '{0} / {1} U belegt Â· {2} GerÃ¤te',
+
+    'network.overview': 'ÃœBERSICHT', 'network.sparklines': 'SPARKLINES (LIVE-TICKS)',
+    'network.liveLoad': 'LIVE-LAST PRO GERÃ„T', 'network.topTraffic': 'TOP-PORTS NACH TRAFFIC',
+    'network.topErrors': 'TOP-PORTS NACH FEHLERN / LINK FLAPS', 'network.vrfSubnets': 'VRFS &amp; SUBNETZE',
+    'network.egressTotal': 'Egress (gesamt)', 'network.ingressTotal': 'Ingress (gesamt)',
+    'network.backboneLoad': 'Backbone-Last', 'network.uplinkSaturated': 'Uplink gesÃ¤ttigt',
+    'network.activeDdos': 'Aktiver DDoS', 'network.breachProgress': 'Breach-Fortschritt',
+    'network.breachTarget': 'Breach-Ziel', 'network.breachWarned': 'Breach gewarnt',
+    'network.totalPorts': 'Ports gesamt', 'network.totalCables': 'Kabel gesamt',
+    'common.yes': 'JA', 'common.no': 'Nein',
+    'spark.rps': 'Requests/s (live)', 'spark.uplinkCap': 'Uplink-KapazitÃ¤t (live, Gbps)',
+    'spark.repPct': 'Reputation % (live, /65535)', 'spark.dropped': 'Verworfen/s (Angriffe)',
+    'spark.scrubbed': 'Gescrubbt (Gbps)', 'spark.activeDdosTrend': 'Aktiver DDoS (Trend, Gbps)',
+    'network.noLiveLoad': 'Keine GerÃ¤te mit Live-Lastfeldern gefunden.',
+    'network.th.device': 'GerÃ¤t', 'network.th.egress': 'Egress', 'network.th.ingress': 'Ingress',
+    'network.th.fabric': 'Fabric', 'network.th.saturated': 'GesÃ¤ttigt',
+    'network.noTraffic': 'Keine Traffic-ZÃ¤hler &gt; 0 in dieser Save (ZÃ¤hler evtl. noch nicht befÃ¼llt).',
+    'network.th.port': 'Port', 'network.th.kind': 'Art', 'network.th.capacity': 'KapazitÃ¤t',
+    'network.th.totalTraffic': 'Traffic gesamt',
+    'network.noErrors': 'Keine Ports mit Fehlern oder Link-Flaps.',
+    'network.th.errors': 'Fehler', 'network.th.linkFlaps': 'Link Flaps',
+    'network.th.vrfId': 'VRF-ID', 'network.th.l3vni': 'L3VNI', 'network.th.managed': 'Verwaltet',
+    'network.th.uncontended': 'Unkontendiert', 'network.th.subnetId': 'Subnetz-ID',
+    'network.th.l2vni': 'L2VNI', 'network.th.vrf': 'VRF', 'network.th.class': 'Klasse',
+
+    'customers.health': 'health = 1.0 (Auswahl)', 'customers.clearProbation': 'BewÃ¤hrung aufheben (Auswahl)',
+    'customers.slaZero': 'SLA-Gutschriften = 0 (Auswahl)', 'customers.setSelection': 'Setzen (Auswahl)',
+    'customers.th.id': 'ID', 'customers.th.name': 'Name', 'customers.th.archetype': 'Archetyp',
+    'customers.th.health': 'health', 'customers.th.priceMult': 'price_mult',
+    'customers.th.probation': 'BewÃ¤hrung', 'customers.th.sla': 'SLA-Gutschriften',
+
+    'player.financesStats': 'FINANZEN &amp; STATISTIK',
+    'player.cash': 'Guthaben ($)', 'player.reputation': 'Reputation (0â€“1)', 'player.skill': 'Spieler-Skill',
+    'player.difficulty': 'Schwierigkeit', 'player.churnLock': 'KÃ¼ndigungssperre (Kunden gesperrt)',
+    'player.bailoutAvailable': 'Rettungspaket verfÃ¼gbar', 'player.bailoutsTaken': 'Rettungspakete genutzt',
+    'player.maxProspects': 'Max. Interessenten',
+
+    'repair.oneClickFixes': 'ONE-CLICK-FIXES', 'repair.hint': 'Ã„nderungen werden beim Download angewendet.',
+    'repair.clearIncidents': 'Aktive VorfÃ¤lle lÃ¶schen', 'repair.releaseMaintenance': 'Wartungs-Hosts freigeben',
+    'repair.resetOvertemp': 'Ãœbertemperatur zurÃ¼cksetzen', 'repair.clearSiem': 'SIEM-Speicher leeren (TB)',
+    'repair.clearChurn': 'KÃ¼ndigungsverlauf &amp; Rep-Verlust lÃ¶schen',
+    'repair.upgradeNics': 'Alle Host-NICs auf 25G Sfp28 aufrÃ¼sten (bis zu 2 Module)',
+    'repair.convertNics10g': 'Alle Host-NICs auf 10G SFP+ setzen (bis zu 2 Module)',
+    'repair.hostNicStatus': '{0} / {1} Hosts',
+    'repair.current': 'aktuell: {0}',
+
+    'tuning.filterPlaceholder': 'Filterâ€¦ (z.B. rep_, health, failure)',
+    'tuning.hint': 'Wird in config.tuning UND base_config.tuning geschrieben.',
+    'tuning.notFound': 'config.tuning nicht gefunden',
+    'tuning.th.parameter': 'Parameter', 'tuning.th.value': 'Wert',
+    'tuning.countAll': '{0} Parameter', 'tuning.countFiltered': '{0} / {1} Parameter',
+
+    'stats.lifetimeTotals': 'GESAMTSUMMEN (kosmetisch, in $)',
+    'stats.totalRevenue': 'Gesamtumsatz', 'stats.recurringRevenue': 'Wiederkehrender Umsatz',
+    'stats.oneTimeRevenue': 'Einmaliger Umsatz', 'stats.totalCost': 'Gesamtkosten',
+    'stats.noncashCost': 'Nicht-zahlungswirksame Kosten', 'stats.totalCapex': 'Gesamt-CAPEX',
+    'stats.depreciation': 'Abschreibung', 'stats.assetDisposals': 'AnlagenabgÃ¤nge',
+    'stats.totalFinancing': 'Gesamtfinanzierung',
+
+    'downloadBtn': 'Gepatchte .save herunterladen',
+  },
+};
+let currentLang = 'en';
+function t(key, ...args) {
+  const dict = I18N[currentLang] || I18N.en;
+  let s = dict[key] ?? I18N.en[key] ?? key;
+  args.forEach((a, i) => { s = s.replace('{' + i + '}', a); });
+  return s;
+}
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+}
+function setLang(lang) {
+  currentLang = lang;
+  try { localStorage.setItem('uptime-editor-lang', lang); } catch (e) {}
+  const btn = document.getElementById('langToggle');
+  if (btn) btn.textContent = lang === 'en' ? 'EN' : 'DE';
+  applyI18n();
+  if (state) {
+    updateLoadStatusBar();
+    updateModalMetaUI();
+    updateLoadModalMetaUI();
+    renderDevices(); renderRackView(); renderNetwork(); renderCustomers();
+    renderPlayer(); renderRepair(); renderTuning(); renderStats();
+  }
+}
+(function initLang() {
+  let saved = null;
+  try { saved = localStorage.getItem('uptime-editor-lang'); } catch (e) {}
+  currentLang = (saved === 'de') ? 'de' : 'en';
+  const btn = document.getElementById('langToggle');
+  if (btn) {
+    btn.textContent = currentLang === 'en' ? 'EN' : 'DE';
+    btn.addEventListener('click', () => setLang(currentLang === 'en' ? 'de' : 'en'));
+  }
+  applyI18n();
+})();
+
+// ============ Data model ============
+const SCALE = 100000000n;
+const num = v => v instanceof F ? v.v : (typeof v === 'bigint' ? Number(v) : v);
+let state = null;
+
+const GROUPS = [
+  { key:'host',   labelKey:'group.hosts',      cls:'t-host' },
+  { key:'switch', labelKey:'group.switches',   cls:'t-switch' },
+  { key:'gw',     labelKey:'group.gateways',   cls:'t-gw' },
+  { key:'edd',    labelKey:'group.edds',       cls:'t-edd' },
+  { key:'fw',     labelKey:'group.appliances', cls:'t-fw' },
+  { key:'rack',   labelKey:'group.racks',      cls:'t-rack' },
+  { key:'az',     labelKey:'group.azs',        cls:'t-az' },
+  { key:'region', labelKey:'group.regions',    cls:'t-region' },
+];
+
+function collectDevices(root) {
+  const racks = root.get('racks') || [];
+  const rackAz = new Map();
+  for (const r of racks) rackAz.set(r.get('id'), r.get('az_id'));
+  const azOf = d => {
+    if (d.has('az_id')) return d.get('az_id');
+    if (d.has('rack_id')) return rackAz.get(d.get('rack_id'));
+    const pl = d.get('placement');
+    if (pl instanceof Map && pl.get('Rack') instanceof Map) return rackAz.get(pl.get('Rack').get('rack_id'));
+    return null;
+  };
+  const out = [];
+  const add = (type, dev) => {
+    if (!(dev instanceof Map)) return;
+    const nameKey = dev.has('display_name') ? 'display_name' : (dev.has('name') ? 'name' : null);
+    if (nameKey) out.push({ type, dev, nameKey, az: azOf(dev) });
+  };
+  const pool = root.get('pool');
+  if (pool instanceof Map) for (const h of (pool.get('hosts') || [])) add('host', h);
+  const sw = root.get('switches');
+  if (sw instanceof Map) for (const v of sw.values()) add('switch', v);
+  for (const g of (root.get('gateways') || [])) add('gw', g);
+  for (const e of (root.get('edds') || [])) add('edd', e);
+  for (const s of (root.get('security_appliances') || [])) add('fw', s);
+  for (const r of (root.get('racks') || [])) add('rack', r);
+  for (const a of (root.get('azs') || [])) add('az', a);
+  for (const rg of (root.get('regions') || [])) add('region', rg);
+  return out;
+}
+
+function collectCustomers(root) {
+  const out = [];
+  const cs = root.get('customers');
+  if (!(cs instanceof Map)) return out;
+  for (const entry of cs.values()) {
+    if (!(entry instanceof Map)) continue;
+    const inner = entry.get('customer');
+    if (!(inner instanceof Map)) continue;
+    out.push({ entry, inner });
+  }
+  out.sort((a, b) => a.inner.get('id') - b.inner.get('id'));
+  return out;
+}
+
+// ============ Loading & rendering ============
+function loadFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const buf = new Uint8Array(reader.result);
+      if (new TextDecoder().decode(buf.slice(0, 5)) !== 'CSIM3') throw new Error(t('alert.notUptimeSave'));
+      const [root] = mpDecode(buf, 5);
+      state = { header: buf.slice(0, 5), root, filename: file.name,
+                devices: collectDevices(root), customers: collectCustomers(root) };
+      renderAll(file);
+    } catch (e) { alert(t('alert.errorLoading', e.message)); console.error(e); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderAll(file) {
+  const r = state.root;
+  const fi = document.getElementById('fileinfo');
+  fi.classList.add('show');
+  document.getElementById('fname').textContent = state.filename;
+  document.getElementById('fsize').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+  document.getElementById('fmeta').textContent = t('fileinfo.summary',
+    r.get('scenario_id') || '?', r.get('current_site') || '?', state.devices.length, state.customers.length);
+  document.getElementById('nav').style.display = 'flex';
+  document.getElementById('downloadBtn').classList.add('show');
+  updateLoadStatusBar();
+  openLoadMetaModal();
+
+  const topbar = document.getElementById('topbar');
+  const drop = document.getElementById('drop');
+  topbar.classList.remove('centered');
+  drop.classList.remove('big');
+  drop.style.display = 'none';
+  if (!document.getElementById('reloadBtn')) {
+    const btn = document.createElement('button');
+    btn.id = 'reloadBtn';
+    btn.textContent = t('reloadBtn');
+    btn.style.marginTop = '8px';
+    btn.addEventListener('click', () => {
+      topbar.classList.add('centered');
+      drop.classList.add('big');
+      drop.style.display = '';
+      fi.classList.remove('show');
+      document.getElementById('file').value = '';
+    });
+    fi.appendChild(btn);
+  }
+
+  renderDevices(); renderRackView(); renderNetwork(); renderCustomers(); renderPlayer(); renderRepair(); renderTuning(); renderStats();
+}
+
+// ---- Dark/Light Theme Toggle ----
+(function initTheme() {
+  const root = document.documentElement;
+  const btn = document.getElementById('themeToggle');
+  if (!btn) return;
+  const apply = (mode) => {
+    root.setAttribute('data-theme', mode);
+    btn.textContent = mode === 'dark' ? btn.dataset.lightLabel || 'Light Mode' : btn.dataset.darkLabel || 'Dark Mode';
+    btn.dataset.mode = mode;
+  };
+  let saved = null;
+  try { saved = localStorage.getItem('uptime-editor-theme'); } catch (e) {}
+  apply(saved || root.getAttribute('data-theme') || 'dark');
+  btn.addEventListener('click', () => {
+    const next = btn.dataset.mode === 'dark' ? 'light' : 'dark';
+    apply(next);
+    try { localStorage.setItem('uptime-editor-theme', next); } catch (e) {}
+  });
+})();
+
+// ---- Devices ----
+function renderDevices() {
+  document.getElementById('devToolbar').style.display = 'flex';
+  const container = document.getElementById('devGroups');
+  container.innerHTML = '';
+  for (const g of GROUPS) {
+    const devs = state.devices.filter(d => d.type === g.key);
+    if (!devs.length) continue;
+    const div = document.createElement('div');
+    div.className = 'group';
+    div.innerHTML = '<h2><input type="checkbox" class="grpsel" checked>' +
+      '<span class="led ' + g.cls + '"></span>' + t(g.labelKey) +
+      ' <span class="cnt">(' + devs.length + ')</span></h2>';
+    const tbl = document.createElement('table');
+    const showPlacement = !['rack', 'az', 'region'].includes(g.key);
+    tbl.innerHTML = '<tr><th></th><th>' + t('devices.th.id') + '</th><th>' + t('devices.th.az') +
+      '</th>' + (showPlacement ? '<th>' + t('devices.th.rack') + '</th><th>' + t('devices.th.uheight') + '</th>' : '') +
+      '<th>' + t('devices.th.name') + '</th>' +
+      '<th>' + t('devices.th.plain') + '</th></tr>';
+    const rackById = new Map((state.root.get('racks') || []).map(r => [r.get('id'), r]));
+    for (const d of devs) {
+      const tr = document.createElement('tr');
+      const placement = rackPlacement(d.type, d.dev);
+      const rackInfo = placement && rackById.has(placement.rackId)
+        ? '#' + placement.rackId + ' ' + (rackById.get(placement.rackId).get('name') || 'Rack')
+        : 'â€“';
+      const uSize = uSizeOf(d.dev) || 1;
+      const uPlacement = placement ? 'U' + placement.startU + ' (' + uSize + 'U)' : 'â€“';
+      tr.innerHTML =
+        '<td class="sel"><input type="checkbox" class="rowsel" checked></td>' +
+        '<td class="id">' + d.dev.get('id') + '</td>' +
+        '<td class="az">' + (d.az ?? 'â€“') + '</td>' +
+        (showPlacement ? '<td class="rack" data-rack-id="' + (placement ? placement.rackId : '') + '">' + rackInfo + '</td>' +
+          '<td class="uheight">' + uPlacement + '</td>' : '') +
+        '<td><input type="text" class="nm"></td>' +
+        '<td><input type="text" class="pl"></td>';
+      const nm = tr.querySelector('.nm'), pl = tr.querySelector('.pl');
+      nm.value = d.dev.get(d.nameKey);
+      if (d.dev.has('display_name_plain')) pl.value = d.dev.get('display_name_plain');
+      else pl.parentElement.innerHTML = '<span style="color:var(--dim)">â€“</span>';
+      const originalName = nm.value;
+      const originalPlain = d.dev.has('display_name_plain') ? pl.value : null;
+      const mark = () => tr.classList.toggle('changed',
+        nm.value !== originalName ||
+        (d.dev.has('display_name_plain') && pl.value !== originalPlain));
+      nm.addEventListener('input', () => {
+        d.dev.set(d.nameKey, nm.value);
+        if (d.rvnm && d.rvnm.value !== nm.value) d.rvnm.value = nm.value;
+        if (d.type === 'rack') {
+          document.querySelectorAll('.rack-name[data-rack-id="' + d.dev.get('id') + '"]').forEach(input => {
+            if (input.value !== nm.value) input.value = nm.value;
+          });
+          document.querySelectorAll('.rack[data-rack-id="' + d.dev.get('id') + '"]').forEach(cell => {
+            cell.textContent = '#' + d.dev.get('id') + ' ' + nm.value;
+          });
+        }
+        mark();
+      });
+      pl.addEventListener('input', () => {
+        if (d.dev.has('display_name_plain')) d.dev.set('display_name_plain', pl.value);
+        mark();
+      });
+      d.tr = tr; d.nm = nm; d.pl = pl;
+      tbl.appendChild(tr);
+    }
+    div.appendChild(tbl);
+    container.appendChild(div);
+    const grpsel = div.querySelector('.grpsel');
+    const rows = () => [...tbl.querySelectorAll('.rowsel')];
+    grpsel.addEventListener('change', () => rows().forEach(c => c.checked = grpsel.checked));
+    tbl.addEventListener('change', e => {
+      if (!e.target.classList.contains('rowsel')) return;
+      const rs = rows(); const on = rs.filter(c => c.checked).length;
+      grpsel.checked = on === rs.length;
+      grpsel.indeterminate = on > 0 && on < rs.length;
+    });
+  }
+}
+
+// ---- Rack-View ----
+const DEV_COLORS = { host:'var(--green)', switch:'var(--cyan)', gw:'var(--amber)', edd:'var(--violet)', fw:'var(--red)' };
+
+function uSizeOf(dev) {
+  const sku = dev.get('sku');
+  if (!(sku instanceof Map)) return 1;
+  if (typeof sku.get('u_size') === 'number') return sku.get('u_size');
+  const form = sku.get('form');
+  if (form instanceof Map && form.get('Rack') instanceof Map) {
+    const u = form.get('Rack').get('u_size');
+    if (typeof u === 'number') return u;
+  }
+  return 1;
+}
+
+function rackPlacement(type, dev) {
+  if (type === 'host' && dev.has('rack_id'))
+    return { rackId: dev.get('rack_id'), startU: dev.get('start_u') ?? 1 };
+  const pl = dev.get('placement');
+  if (pl instanceof Map && pl.get('Rack') instanceof Map) {
+    const r = pl.get('Rack');
+    return { rackId: r.get('rack_id'), startU: r.get('start_u') ?? 1 };
+  }
+  const mount = dev.get('mount');
+  if (mount instanceof Map && mount.get('Rack') instanceof Map) {
+    const r = mount.get('Rack');
+    return { rackId: r.get('rack_id'), startU: r.get('start_u') ?? 1 };
+  }
+  return null;
+}
+
+function computeRackLayout() {
+  const racks = new Map();
+  for (const r of (state.root.get('racks') || [])) {
+    racks.set(r.get('id'), { rack: r, devices: [] });
+  }
+  let unplaced = 0;
+  for (const d of state.devices) {
+    if (!(d.type in DEV_COLORS)) continue;
+    const pl = rackPlacement(d.type, d.dev);
+    if (!pl || !racks.has(pl.rackId)) { unplaced++; continue; }
+    racks.get(pl.rackId).devices.push({
+      type: d.type, name: d.dev.get(d.nameKey), ref: d,
+      startU: pl.startU, uSize: uSizeOf(d.dev),
+    });
+  }
+  return { racks, unplaced };
+}
+
+function renderRackView() {
+  const { racks, unplaced } = computeRackLayout();
+  const container = document.getElementById('rackView');
+  container.innerHTML = '';
+  const sorted = [...racks.values()].sort((a, b) =>
+    (a.rack.get('az_id') - b.rack.get('az_id')) || (a.rack.get('id') - b.rack.get('id')));
+  for (const { rack, devices } of sorted) {
+    const cap = rack.get('capacity_u') || 42;
+    const occ = new Array(cap + 1).fill(null);   // occ[u] = device oder 'span'
+    let usedU = 0;
+    devices.sort((a, b) => b.startU - a.startU);
+    for (const dev of devices) {
+      const top = Math.min(cap, dev.startU + dev.uSize - 1);
+      for (let u = dev.startU; u <= top; u++) {
+        if (u >= 1 && u <= cap) { occ[u] = (u === top) ? { dev, span: top - dev.startU + 1 } : 'span'; }
+      }
+      usedU += dev.uSize;
+    }
+    const el = document.createElement('div');
+    el.className = 'rack';
+    el.innerHTML = '<h4><span><span class="raz">#' + rack.get('id') + '</span> <input type="text" class="rack-name" data-rack-id="' + rack.get('id') + '"></span>' +
+      '<span class="raz">AZ ' + rack.get('az_id') + '</span></h4>';
+    const rackName = el.querySelector('.rack-name');
+    rackName.value = rack.get('name') || '';
+    rackName.addEventListener('input', () => {
+      rack.set('name', rackName.value);
+      const rackDevice = state.devices.find(d => d.type === 'rack' && d.dev.get('id') === rack.get('id'));
+      if (rackDevice && rackDevice.nm && rackDevice.nm.value !== rackName.value) {
+        rackDevice.nm.value = rackName.value;
+        rackDevice.nm.dispatchEvent(new Event('input'));
+      }
+      document.querySelectorAll('.rack[data-rack-id="' + rack.get('id') + '"]').forEach(cell => {
+        cell.textContent = '#' + rack.get('id') + ' ' + rackName.value;
+      });
+    });
+    const frame = document.createElement('div');
+    frame.className = 'frame';
+    for (let u = cap; u >= 1; u--) {
+      const uno = document.createElement('div'); uno.className = 'uno'; uno.textContent = u;
+      frame.appendChild(uno);
+      const cell = occ[u];
+      if (cell && cell !== 'span') {
+        const dv = document.createElement('div');
+        dv.className = 'dev';
+        dv.style.borderLeftColor = DEV_COLORS[cell.dev.type];
+        dv.style.height = (cell.span * 16) + 'px';
+        dv.innerHTML = '<input type="text" class="rvnm"><span class="du">' +
+          'U' + cell.dev.startU + ' (' + cell.span + 'U)</span>';
+        const rvnm = dv.querySelector('.rvnm');
+        const ref = cell.dev.ref;
+        ref.rvnm = rvnm;
+        rvnm.value = ref.nm ? ref.nm.value : cell.dev.name;
+        rvnm.addEventListener('input', () => {
+          if (ref.nm && ref.nm.value !== rvnm.value) {
+            ref.nm.value = rvnm.value;
+            ref.nm.dispatchEvent(new Event('input'));  // marks the row as changed in the Devices tab
+          }
+        });
+        if (ref.nm) ref.nm.addEventListener('input', () => {
+          if (rvnm.value !== ref.nm.value) rvnm.value = ref.nm.value;
+        });
+        uno.style.height = (cell.span * 16) + 'px';
+        uno.style.lineHeight = (cell.span * 16) + 'px';
+        uno.textContent = cell.dev.startU + cell.span - 1;
+        frame.appendChild(dv);
+        u -= cell.span - 1;
+      } else if (cell === 'span') {
+        // should never be reached due to the decrement above
+        const s = document.createElement('div'); s.className = 'slot'; frame.appendChild(s);
+      } else {
+        const s = document.createElement('div'); s.className = 'slot'; frame.appendChild(s);
+      }
+    }
+    el.appendChild(frame);
+    const fill = document.createElement('div');
+    fill.className = 'fill';
+    fill.textContent = t('rackview.fill', usedU, cap, devices.length);
+    el.appendChild(fill);
+    container.appendChild(el);
+  }
+  document.getElementById('rackViewInfo').textContent =
+    t('rackview.summary', sorted.length, unplaced ? t('rackview.unplaced', unplaced) : '');
+}
+
+function esc(s) { const d = document.createElement('span'); d.textContent = String(s ?? ''); return d.innerHTML; }
+
+// ---- Customers ----
+function renderCustomers() {
+  document.getElementById('custToolbar').style.display = 'flex';
+  const container = document.getElementById('custTable');
+  container.innerHTML = '';
+  const tbl = document.createElement('table');
+  tbl.innerHTML = '<tr><th></th><th>' + t('customers.th.id') + '</th><th>' + t('customers.th.name') +
+    '</th><th>' + t('customers.th.archetype') + '</th>' +
+    '<th>' + t('customers.th.health') + '</th><th>' + t('customers.th.priceMult') +
+    '</th><th>' + t('customers.th.probation') + '</th><th>' + t('customers.th.sla') + '</th></tr>';
+  for (const c of state.customers) {
+    const tr = document.createElement('tr');
+    const id = c.inner.get('id');
+    tr.innerHTML =
+      '<td class="sel"><input type="checkbox" class="crowsel" checked></td>' +
+      '<td class="id">' + id + '</td>' +
+      '<td><input type="text" class="cnm"></td>' +
+      '<td class="arch">' + (c.inner.get('archetype') || '') + '</td>' +
+      '<td><input type="number" class="chp" step="0.05" min="0" max="1"></td>' +
+      '<td><input type="number" class="cpm" step="0.1" min="0"></td>' +
+      '<td><input type="checkbox" class="cpr"></td>' +
+      '<td><input type="number" class="csla" step="1" min="0"></td>';
+    const nm = tr.querySelector('.cnm'), hp = tr.querySelector('.chp'),
+          pm = tr.querySelector('.cpm'), pr = tr.querySelector('.cpr'), sla = tr.querySelector('.csla');
+    nm.value = c.inner.get('name');
+    hp.value = num(c.entry.get('health')).toFixed(2);
+    pm.value = num(c.entry.get('price_multiplier'));
+    pr.checked = !!c.entry.get('on_probation');
+    sla.value = num(c.entry.get('sla_credits'));
+    c.tr = tr; c.nm = nm; c.hp = hp; c.pm = pm; c.pr = pr; c.sla = sla;
+    tbl.appendChild(tr);
+  }
+  container.appendChild(tbl);
+  document.getElementById('custSelAll').onchange = e =>
+    tbl.querySelectorAll('.crowsel').forEach(c => c.checked = e.target.checked);
+}
+function custSelection() { return state.customers.filter(c => c.tr && c.tr.querySelector('.crowsel').checked); }
+
+// ---- Player ----
+const PLAYER_FIELDS = [
+  { key:'cash',            labelKey:'player.cash',            kind:'money' },
+  { key:'reputation',      labelKey:'player.reputation',      kind:'float', step:0.01 },
+  { key:'player_skill',    labelKey:'player.skill',           kind:'float', step:0.01 },
+  { key:'difficulty',      labelKey:'player.difficulty',      kind:'text',  list:['Easy','Casual','Standard','Hard'] },
+  { key:'customers_locked',labelKey:'player.churnLock',       kind:'bool' },
+  { key:'bailout_armed',   labelKey:'player.bailoutAvailable',kind:'bool' },
+  { key:'bailouts_taken',  labelKey:'player.bailoutsTaken',   kind:'int' },
+  { key:'max_prospects',   labelKey:'player.maxProspects',    kind:'int' },
+];
+
+function renderPlayer() {
+  const grid = document.getElementById('playerGrid');
+  grid.innerHTML = '';
+  for (const f of PLAYER_FIELDS) {
+    if (!state.root.has(f.key)) continue;
+    const v = state.root.get(f.key);
+    const lab = document.createElement('label'); lab.textContent = t(f.labelKey);
+    let inp;
+    if (f.kind === 'bool') {
+      inp = document.createElement('input'); inp.type = 'checkbox'; inp.checked = !!v;
+    } else {
+      inp = document.createElement('input');
+      inp.type = f.kind === 'text' ? 'text' : 'number';
+      if (f.step) inp.step = f.step;
+      if (f.kind === 'money') { inp.step = '0.01'; inp.value = (Number(v) / 1e8).toFixed(2); }
+      else if (f.kind === 'float') inp.value = num(v);
+      else if (f.kind === 'int') inp.value = num(v);
+      else inp.value = v;
+      if (f.list) {
+        const dl = document.createElement('datalist'); dl.id = 'dl_' + f.key;
+        for (const o of f.list) { const op = document.createElement('option'); op.value = o; dl.appendChild(op); }
+        grid.appendChild(dl); inp.setAttribute('list', dl.id);
+      }
+      inp.addEventListener('input', () => inp.classList.add('dirty'));
+    }
+    f.input = inp;
+    grid.appendChild(lab); grid.appendChild(inp);
+  }
+}
+
+// ---- Reparatur ----
+// Every host has 4 fixed onboard RJ45 ports (idx 0-3) + 2 power ports (idx 4-5) in
+// root.ports, independent of nic_modules. Each installed Sfp28 module additionally
+// occupies 2 more NetworkData ports appended in module order (idx 6-7, 8-9, ...) â€”
+// verified against real save data (module_slots is always 2, so max 4 extra ports).
+function upgradeAllHostNics(r) {
+  const pool = r.get('pool');
+  const hosts = pool ? pool.get('hosts') : null;
+  const ports = r.get('ports');
+  if (!Array.isArray(hosts) || !(ports instanceof Map)) return;
+  let nextPortId = num(r.get('next_port_id'));
+  let changedModules = 0, changedPorts = 0;
+  for (const h of hosts) {
+    const mods = h.get('nic_modules') || [];
+    const existingCount = mods.length;
+    const toAdd = Math.max(0, 2 - existingCount);
+    const newMods = mods.slice();
+    for (let m = 0; m < toAdd; m++) {
+      const moduleIndex = existingCount + m;
+      newMods.push(new Map([['media', 'Sfp28'], ['link_capacity_gbps', 25], ['port_count', 2]]));
+    }
+    for (let moduleIndex = 0; moduleIndex < Math.min(2, newMods.length); moduleIndex++) {
+      const mod = newMods[moduleIndex];
+      if (mod.get('media') !== 'Sfp28' || mod.get('link_capacity_gbps') !== 25) changedModules++;
+      mod.set('media', 'Sfp28');
+      mod.set('link_capacity_gbps', 25);
+      mod.set('port_count', 2);
+      const baseIdx = 6 + moduleIndex * 2;
+      for (let pn = 0; pn < 2; pn++) {
+        const index = baseIdx + pn;
+        const port = [...ports.values()].find(p => {
+          const owner = p.get('owner');
+          return owner instanceof Map && owner.get('Host') === h.get('id') &&
+            p.get('index') === index && p.get('kind') === 'NetworkData';
+        });
+        if (port) {
+          if (port.get('media') !== 'Sfp28' || port.get('link_capacity_gbps') !== 25) changedPorts++;
+          port.set('media', 'Sfp28');
+          port.set('link_capacity_gbps', 25);
+        } else {
+          const pid = nextPortId++;
+          const portMap = new Map([
+            ['saturated', false], ['id', pid], ['owner', new Map([['Host', h.get('id')]])],
+            ['index', index], ['kind', 'NetworkData'], ['media', 'Sfp28'],
+            ['link_capacity_gbps', 25], ['state', 'Down'], ['connected', []],
+            ['breakout', null], ['counters', new Map([
+              ['bytes_egress_total', 0], ['bytes_ingress_total', 0],
+              ['errors_lifetime', 0], ['last_traffic_at', null], ['link_flaps', 0],
+            ])],
+          ]);
+          ports.set(pid, portMap);
+          changedPorts++;
+        }
+      }
+    }
+    h.set('nic_modules', newMods);
+  }
+  updateHostNicCables(r, 'Sfp28', 25);
+  r.set('next_port_id', nextPortId);
+  alert(t('alert.nicUpgrade', changedModules, changedPorts, hosts.length));
+}
+
+function convertAllHostNics10g(r) {
+  const pool = r.get('pool');
+  const hosts = pool ? pool.get('hosts') : null;
+  const ports = r.get('ports');
+  if (!Array.isArray(hosts) || !(ports instanceof Map)) return;
+  let changedModules = 0, changedPorts = 0;
+  let nextPortId = num(r.get('next_port_id'));
+  for (const h of hosts) {
+    const mods = (h.get('nic_modules') || []).slice();
+    while (mods.length < 2) mods.push(new Map([['media', 'SfpPlus'], ['link_capacity_gbps', 10], ['port_count', 2]]));
+    for (const mod of mods) {
+      if (!(mod instanceof Map)) continue;
+      if (mod.get('media') !== 'SfpPlus' || mod.get('link_capacity_gbps') !== 10) changedModules++;
+      mod.set('media', 'SfpPlus');
+      mod.set('link_capacity_gbps', 10);
+      mod.set('port_count', 2);
+    }
+    h.set('nic_modules', mods);
+    for (let moduleIndex = 0; moduleIndex < 2; moduleIndex++) {
+      for (let pn = 0; pn < 2; pn++) {
+        const index = 6 + moduleIndex * 2 + pn;
+        const port = [...ports.values()].find(p => {
+          const owner = p.get('owner');
+          return owner instanceof Map && owner.get('Host') === h.get('id') &&
+            p.get('index') === index && p.get('kind') === 'NetworkData';
+        });
+        if (port) {
+          if (port.get('media') !== 'SfpPlus' || port.get('link_capacity_gbps') !== 10) changedPorts++;
+          port.set('media', 'SfpPlus');
+          port.set('link_capacity_gbps', 10);
+        } else {
+          const portMap = new Map([
+            ['saturated', false], ['id', nextPortId], ['owner', new Map([['Host', h.get('id')]])],
+            ['index', index], ['kind', 'NetworkData'], ['media', 'SfpPlus'],
+            ['link_capacity_gbps', 10], ['state', 'Down'], ['connected', []],
+            ['breakout', null], ['counters', new Map([
+              ['bytes_egress_total', 0], ['bytes_ingress_total', 0],
+              ['errors_lifetime', 0], ['last_traffic_at', null], ['link_flaps', 0],
+            ])],
+          ]);
+          ports.set(nextPortId++, portMap);
+          changedPorts++;
+        }
+      }
+    }
+  }
+  updateHostNicCables(r, 'SfpPlus', 10);
+  r.set('next_port_id', nextPortId);
+  alert(t('alert.nic10g', changedModules, changedPorts, hosts.length));
+}
+
+function hostNicStatus(r, media, capacity) {
+  const hosts = r.get('pool')?.get('hosts') || [];
+  const current = hosts.filter(h => (h.get('nic_modules') || []).some(m =>
+    m instanceof Map && m.get('media') === media && m.get('link_capacity_gbps') === capacity)).length;
+  return t('repair.hostNicStatus', current, hosts.length);
+}
+
+function updateHostNicCables(r, media, capacity) {
+  const ports = r.get('ports');
+  const cables = r.get('cables') || [];
+  if (!(ports instanceof Map) || !Array.isArray(cables)) return;
+  const hostModulePortIds = new Set([...ports.values()].filter(p => {
+    const owner = p.get('owner');
+    return owner instanceof Map && owner.has('Host') && p.get('kind') === 'NetworkData' && p.get('index') >= 6 &&
+      p.get('media') === media && p.get('link_capacity_gbps') === capacity;
+  }).map(p => p.get('id')));
+  const cableKind = capacity === 25 ? 'Dac25G' : 'Dac';
+  for (const cable of cables) {
+    const a = cable.get('a');
+    const b = cable.get('b');
+    if (cable.get('kind') === 'Power' || !(a instanceof Map) || !(b instanceof Map)) continue;
+    if (hostModulePortIds.has(cable.get('a_port')) || hostModulePortIds.has(cable.get('b_port'))) {
+      cable.set('kind', cableKind);
+    }
+  }
+}
+
+function captureNicState(r) {
+  const hosts = r.get('pool')?.get('hosts') || [];
+  const ports = r.get('ports');
+  return {
+    nextPortId: r.get('next_port_id'),
+    modules: hosts.map(h => ({ host: h, nicModules: h.get('nic_modules'), values: (h.get('nic_modules') || []).map(m => ({ map: m, media: m.get('media'), capacity: m.get('link_capacity_gbps'), portCount: m.get('port_count') })) })),
+    ports: ports instanceof Map ? [...ports.values()].filter(p => {
+      const owner = p.get('owner');
+      return owner instanceof Map && owner.has('Host') && p.get('kind') === 'NetworkData' && p.get('index') >= 6;
+    }).map(p => ({ port: p, media: p.get('media'), capacity: p.get('link_capacity_gbps') })) : [],
+    cables: (r.get('cables') || []).filter(c => c instanceof Map && c.get('kind') !== 'Power' &&
+      ((c.get('a') instanceof Map && c.get('a').has('HostNic')) ||
+       (c.get('b') instanceof Map && c.get('b').has('HostNic')))).map(c => ({ cable: c, kind: c.get('kind') })),
+    portIds: ports instanceof Map ? new Set(ports.keys()) : new Set(),
+  };
+}
+
+function restoreNicState(r, snapshot) {
+  if (!snapshot) return;
+  const ports = r.get('ports');
+  for (const item of snapshot.modules) {
+    item.host.set('nic_modules', item.nicModules);
+    for (const value of item.values) {
+      value.map.set('media', value.media);
+      value.map.set('link_capacity_gbps', value.capacity);
+      value.map.set('port_count', value.portCount);
+    }
+  }
+  if (ports instanceof Map) {
+    for (const item of snapshot.ports) {
+      item.port.set('media', item.media);
+      item.port.set('link_capacity_gbps', item.capacity);
+    }
+    for (const id of [...ports.keys()]) if (!snapshot.portIds.has(id)) ports.delete(id);
+  }
+  for (const item of snapshot.cables) item.cable.set('kind', item.kind);
+  r.set('next_port_id', snapshot.nextPortId);
+}
+
+let repairActions = [];
+let selectedNicAction = null;
+let nicSnapshot = null;
+function renderRepair() {
+  const r = state.root;
+  const list = document.getElementById('repairList');
+  list.innerHTML = '';
+  repairActions = [
+    { labelKey: 'repair.clearIncidents', count: r.get('active_incidents')?.size ?? 0,
+      run: () => { r.set('active_incidents', new Map()); r.set('recent_resolved_incidents', []); } },
+    { labelKey: 'repair.releaseMaintenance', count: (r.get('maintenance_hosts') || []).length,
+      run: () => r.set('maintenance_hosts', []) },
+    { labelKey: 'repair.resetOvertemp', count: num(r.get('over_temp_minutes')) || 0,
+      run: () => r.set('over_temp_minutes', 0) },
+    { labelKey: 'repair.clearSiem', count: Math.round(num(r.get('siem_storage_used_tb')) * 10) / 10,
+      run: () => r.set('siem_storage_used_tb', new F(0)) },
+    { labelKey: 'repair.clearChurn', count: (r.get('recent_churns') || []).length,
+      run: () => { r.set('recent_churns', []); r.set('churn_rep_loss_hour', new F(0)); } },
+    { labelKey: 'repair.upgradeNics',
+      count: hostNicStatus(r, 'Sfp28', 25),
+      nicStatus: true,
+      run: () => upgradeAllHostNics(r) },
+    { labelKey: 'repair.convertNics10g',
+      count: hostNicStatus(r, 'SfpPlus', 10),
+      nicStatus: true,
+      run: () => convertAllHostNics10g(r) },
+  ];
+  selectedNicAction = null;
+  nicSnapshot = null;
+  for (const a of repairActions) {
+    const row = document.createElement('div');
+    row.style.display = 'flex'; row.style.alignItems = 'center'; row.style.gap = '12px';
+    const btn = document.createElement('button');
+    btn.innerHTML = t(a.labelKey);
+    const stat = document.createElement('span'); stat.className = 'stat';
+    stat.textContent = a.nicStatus ? a.count : t('repair.current', a.count);
+    btn.addEventListener('click', () => {
+      if (a.nicStatus && !selectedNicAction) nicSnapshot = captureNicState(r);
+      if (a.nicStatus && selectedNicAction && selectedNicAction !== a.labelKey) restoreNicState(r, nicSnapshot);
+      a.run(); btn.classList.add('done'); btn.innerHTML = 'âœ“ ' + t(a.labelKey);
+      stat.textContent = a.nicStatus ? hostNicStatus(r, a.labelKey === 'repair.upgradeNics' ? 'Sfp28' : 'SfpPlus', a.labelKey === 'repair.upgradeNics' ? 25 : 10) : t('repair.current', 0);
+      if (a.nicStatus) {
+        selectedNicAction = a.labelKey;
+        for (const other of list.querySelectorAll('button')) {
+          if (other !== btn && other.dataset.nicAction === 'true') {
+            other.disabled = false;
+            other.classList.remove('done');
+            other.innerHTML = t(other.dataset.labelKey);
+            other.nextElementSibling.textContent = t('repair.hostNicStatus', 0, (r.get('pool')?.get('hosts') || []).length);
+          }
+        }
+      }
+    });
+    if (a.nicStatus) { btn.dataset.nicAction = 'true'; btn.dataset.labelKey = a.labelKey; }
+    row.appendChild(btn); row.appendChild(stat);
+    list.appendChild(row);
+  }
+}
+
+// ---- Tuning ----
+let tuningRows = [];
+function renderTuning() {
+  const cfgT = state.root.get('config')?.get('tuning');
+  const baseT = state.root.get('base_config')?.get('tuning');
+  const list = document.getElementById('tuningList');
+  list.innerHTML = ''; tuningRows = [];
+  if (!(cfgT instanceof Map)) { list.textContent = t('tuning.notFound'); return; }
+  const tbl = document.createElement('table');
+  tbl.innerHTML = '<tr><th>' + t('tuning.th.parameter') + '</th><th>' + t('tuning.th.value') + '</th></tr>';
+  for (const [k, v] of cfgT) {
+    if (typeof k !== 'string') continue;
+    const isF = v instanceof F, isB = typeof v === 'boolean', isN = typeof v === 'number' || typeof v === 'bigint';
+    if (!isF && !isB && !isN) continue;
+    const tr = document.createElement('tr');
+    const td1 = document.createElement('td'); td1.textContent = k; td1.style.color = 'var(--dim)';
+    const td2 = document.createElement('td');
+    let inp;
+    if (isB) { inp = document.createElement('input'); inp.type = 'checkbox'; inp.checked = v; }
+    else {
+      inp = document.createElement('input'); inp.type = 'number'; inp.step = 'any';
+      inp.value = num(v); inp.style.width = '140px';
+      inp.addEventListener('input', () => inp.classList.add('dirty'));
+    }
+    td2.appendChild(inp);
+    tr.appendChild(td1); tr.appendChild(td2);
+    tbl.appendChild(tr);
+    tuningRows.push({ k, tr, inp, isF, isB, cfgT, baseT });
+  }
+  list.appendChild(tbl);
+  const count = document.getElementById('tuningCount');
+  count.textContent = t('tuning.countAll', tuningRows.length);
+  document.getElementById('tuningSearch').oninput = e => {
+    const q = e.target.value.toLowerCase();
+    let vis = 0;
+    for (const r of tuningRows) {
+      const show = !q || r.k.toLowerCase().includes(q);
+      r.tr.style.display = show ? '' : 'none';
+      if (show) vis++;
+    }
+    count.textContent = t('tuning.countFiltered', vis, tuningRows.length);
+  };
+}
+
+// ---- Statistik ----
+const STAT_FIELDS = [
+  ['total_revenue','stats.totalRevenue'], ['total_recurring_revenue','stats.recurringRevenue'],
+  ['total_one_time_revenue','stats.oneTimeRevenue'], ['total_cost','stats.totalCost'],
+  ['total_noncash_cost','stats.noncashCost'], ['total_capex','stats.totalCapex'],
+  ['total_depreciation','stats.depreciation'], ['total_asset_disposal','stats.assetDisposals'],
+  ['total_financing','stats.totalFinancing'],
+];
+let statInputs = [];
+function renderStats() {
+  const grid = document.getElementById('statsGrid');
+  grid.innerHTML = ''; statInputs = [];
+  for (const [key, labelKey] of STAT_FIELDS) {
+    if (!state.root.has(key)) continue;
+    const lab = document.createElement('label'); lab.textContent = t(labelKey);
+    const inp = document.createElement('input'); inp.type = 'number'; inp.step = '0.01';
+    inp.value = (Number(state.root.get(key)) / 1e8).toFixed(2);
+    inp.addEventListener('input', () => inp.classList.add('dirty'));
+    grid.appendChild(lab); grid.appendChild(inp);
+    statInputs.push({ key, inp });
+  }
+}
+
+
+// ---- Netzwerk ----
+const OWNER_TYPE = { Host:'host', Switch:'switch', Gateway:'gw', Appliance:'fw', Edd:'edd' };
+
+function deviceNameLookup() {
+  const map = new Map(); // "type:id" -> name
+  for (const d of state.devices) map.set(d.type + ':' + d.dev.get('id'), d.dev.get(d.nameKey));
+  return map;
+}
+
+function fmtGbps(v) { const n = Number(num(v) ?? 0); return (n < 0.001 ? '0.00' : n.toFixed(2)) + ' Gbps'; }
+function fmtBytes(n) {
+  n = Number(n);
+  const units = ['B','KB','MB','GB','TB'];
+  let i = 0;
+  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+  return n.toFixed(i === 0 ? 0 : 2) + ' ' + units[i];
+}
+
+function renderNetwork() {
+  const r = state.root;
+  const nameOf = deviceNameLookup();
+
+  // Overview
+  const ov = document.getElementById('netOverview');
+  ov.innerHTML = '';
+  const YES = t('common.yes'), NO = t('common.no');
+  const rows = [
+    [t('network.egressTotal'), fmtGbps(r.get('egress_gbps'))],
+    [t('network.ingressTotal'), fmtGbps(r.get('ingress_gbps'))],
+    [t('network.backboneLoad'), fmtGbps(r.get('backbone_load_gbps'))],
+    [t('network.uplinkSaturated'), r.get('uplink_saturated') ? YES : NO],
+    [t('network.activeDdos'), fmtGbps(r.get('active_ddos_gbps'))],
+    [t('network.breachProgress'), (num(r.get('breach_progress')) * 100).toFixed(1) + ' %'],
+    [t('network.breachTarget'), r.get('breach_target') ?? 'â€“'],
+    [t('network.breachWarned'), r.get('breach_warned') ? YES : NO],
+    [t('network.totalPorts'), r.get('ports') ? r.get('ports').size : 0],
+    [t('network.totalCables'), (r.get('cables') || []).length],
+  ];
+  for (const [label, val] of rows) {
+    const lab = document.createElement('label'); lab.textContent = label;
+    const v = document.createElement('div'); v.textContent = val; v.style.fontWeight = '600';
+    ov.appendChild(lab); ov.appendChild(v);
+  }
+
+  // Sparklines
+  const SPARK_SERIES = [
+    ['live_total_rps', 'spark.rps'],
+    ['live_uplink_capacity_gbps', 'spark.uplinkCap'],
+    ['live_reputation_pct', 'spark.repPct'],
+    ['fleet_dropped_per_sec', 'spark.dropped'],
+    ['fleet_scrubbed_gbps', 'spark.scrubbed'],
+    ['trend_active_ddos_gbps', 'spark.activeDdosTrend'],
+  ];
+  const hist = r.get('history');
+  const sparkC = document.getElementById('netSpark');
+  sparkC.innerHTML = '';
+  if (hist instanceof Map) {
+    for (const [key, labelKey] of SPARK_SERIES) {
+      const arr = hist.get(key);
+      if (!Array.isArray(arr) || !arr.length) continue;
+      const vals = arr.map(num);
+      const scale = key === 'live_reputation_pct' ? 655.35 : 1;
+      const scaled = scale !== 1 ? vals.map(v => v / scale) : vals;
+      const box = document.createElement('div');
+      box.style.cssText = 'background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px';
+      const last = scaled[scaled.length - 1];
+      box.innerHTML = '<div style="font-size:11px;color:var(--dim);margin-bottom:4px">' + t(labelKey) + '</div>' +
+        '<div style="font-size:16px;font-weight:700;margin-bottom:6px">' + last.toFixed(key.includes('pct') || key.includes('gbps') ? 2 : 0) + '</div>';
+      box.appendChild(sparkSvg(scaled));
+      sparkC.appendChild(box);
+    }
+  }
+
+  // Live load per device (switches + gateways)
+  const loadRows = [];
+  const sw = r.get('switches');
+  if (sw instanceof Map) for (const s of sw.values())
+    loadRows.push({ type:'switch', name:s.get('display_name'), eg:s.get('egress_gbps'), ing:s.get('ingress_gbps'),
+      fab:s.get('fabric_load_gbps'), sat:s.get('saturated') });
+  for (const g of (r.get('gateways') || []))
+    loadRows.push({ type:'gw', name:g.get('display_name'), eg:g.get('egress_gbps'), ing:g.get('ingress_gbps'),
+      fab:g.get('fabric_load_gbps'), sat:g.get('fabric_saturated') });
+  loadRows.sort((a, b) => (num(b.eg) + num(b.ing)) - (num(a.eg) + num(a.ing)));
+  const dlC = document.getElementById('netDeviceLoad');
+  if (!loadRows.length) { dlC.innerHTML = '<p class="hint">' + t('network.noLiveLoad') + '</p>'; }
+  else {
+    const tbl = document.createElement('table');
+    tbl.innerHTML = '<tr><th></th><th>' + t('network.th.device') + '</th><th>' + t('network.th.egress') +
+      '</th><th>' + t('network.th.ingress') + '</th><th>' + t('network.th.fabric') +
+      '</th><th>' + t('network.th.saturated') + '</th></tr>';
+    for (const d of loadRows) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td><span class="led ' + (d.type === 'switch' ? 't-switch' : 't-gw') + '"></span></td>' +
+        '<td>' + esc(d.name) + '</td><td>' + fmtGbps(d.eg) + '</td><td>' + fmtGbps(d.ing) + '</td>' +
+        '<td>' + fmtGbps(d.fab) + '</td><td>' + (d.sat ? YES : 'â€“') + '</td>';
+      tbl.appendChild(tr);
+    }
+    dlC.innerHTML = ''; dlC.appendChild(tbl);
+  }
+
+  // Collect + resolve ports
+  const ports = r.get('ports');
+  const resolved = [];
+  if (ports instanceof Map) {
+    for (const p of ports.values()) {
+      const owner = p.get('owner');
+      if (!(owner instanceof Map)) continue;
+      const ownerKind = [...owner.keys()][0];
+      const type = OWNER_TYPE[ownerKind];
+      const ownerId = owner.get(ownerKind);
+      const name = type ? (nameOf.get(type + ':' + ownerId) || (ownerKind + ' #' + ownerId)) : (ownerKind + ' #' + ownerId);
+      const c = p.get('counters');
+      const totalBytes = c ? Number(c.get('bytes_egress_total') || 0) + Number(c.get('bytes_ingress_total') || 0) : 0;
+      const errors = c ? Number(c.get('errors_lifetime') || 0) : 0;
+      const flaps = c ? Number(c.get('link_flaps') || 0) : 0;
+      resolved.push({ id: p.get('id'), owner: name, type, kind: p.get('kind'), state: p.get('state'),
+        capGbps: p.get('link_capacity_gbps'), totalBytes, errors, flaps });
+    }
+  }
+
+  // Top nach Traffic
+  const byTraffic = [...resolved].sort((a, b) => b.totalBytes - a.totalBytes).slice(0, 20);
+  const ttC = document.getElementById('netTopTraffic');
+  if (!byTraffic.length || byTraffic[0].totalBytes === 0) {
+    ttC.innerHTML = '<p class="hint">' + t('network.noTraffic') + '</p>';
+  } else {
+    const tbl = document.createElement('table');
+    tbl.innerHTML = '<tr><th>' + t('network.th.port') + '</th><th>' + t('network.th.device') +
+      '</th><th>' + t('network.th.kind') + '</th><th>' + t('network.th.capacity') +
+      '</th><th>' + t('network.th.totalTraffic') + '</th></tr>';
+    for (const p of byTraffic) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td class="id">#' + p.id + '</td><td>' + esc(p.owner) + '</td><td>' + esc(p.kind) + '</td>' +
+        '<td>' + num(p.capGbps) + ' Gbps</td><td>' + fmtBytes(p.totalBytes) + '</td>';
+      tbl.appendChild(tr);
+    }
+    ttC.innerHTML = ''; ttC.appendChild(tbl);
+  }
+
+  // Top nach Fehlern
+  const byErr = [...resolved].filter(p => p.errors > 0 || p.flaps > 0)
+    .sort((a, b) => (b.errors + b.flaps) - (a.errors + a.flaps)).slice(0, 20);
+  const teC = document.getElementById('netTopErrors');
+  if (!byErr.length) {
+    teC.innerHTML = '<p class="hint">' + t('network.noErrors') + '</p>';
+  } else {
+    const tbl = document.createElement('table');
+    tbl.innerHTML = '<tr><th>' + t('network.th.port') + '</th><th>' + t('network.th.device') +
+      '</th><th>' + t('network.th.kind') + '</th><th>' + t('network.th.errors') +
+      '</th><th>' + t('network.th.linkFlaps') + '</th></tr>';
+    for (const p of byErr) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td class="id">#' + p.id + '</td><td>' + esc(p.owner) + '</td><td>' + esc(p.kind) + '</td>' +
+        '<td>' + p.errors + '</td><td>' + p.flaps + '</td>';
+      tbl.appendChild(tr);
+    }
+    teC.innerHTML = ''; teC.appendChild(tbl);
+  }
+
+  // VRFs & Subnets
+  const vrfC = document.getElementById('netVrf');
+  vrfC.innerHTML = '';
+  const vrfs = r.get('vrfs') || [];
+  const subnets = r.get('subnets') || [];
+  const t1 = document.createElement('table');
+  t1.innerHTML = '<tr><th>' + t('network.th.vrfId') + '</th><th>' + t('devices.th.name') +
+    '</th><th>' + t('network.th.l3vni') + '</th><th>' + t('network.th.managed') +
+    '</th><th>' + t('network.th.uncontended') + '</th></tr>';
+  for (const v of vrfs) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td class="id">' + v.get('id') + '</td><td>' + esc(v.get('name')) + '</td><td>' +
+      v.get('l3vni') + '</td><td>' + (v.get('managed') ? YES : 'â€“') + '</td><td>' + (v.get('uncontended') ? YES : 'â€“') + '</td>';
+    t1.appendChild(tr);
+  }
+  vrfC.appendChild(t1);
+  const t2 = document.createElement('table');
+  t2.style.marginTop = '12px';
+  t2.innerHTML = '<tr><th>' + t('network.th.subnetId') + '</th><th>' + t('network.th.l2vni') +
+    '</th><th>' + t('network.th.vrf') + '</th><th>' + t('network.th.class') + '</th></tr>';
+  for (const s of subnets) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td class="id">' + s.get('id') + '</td><td>' + s.get('l2vni') + '</td><td>' +
+      s.get('vrf') + '</td><td>' + esc(s.get('class')) + '</td>';
+    t2.appendChild(tr);
+  }
+  vrfC.appendChild(t2);
+}
+
+function sparkSvg(vals) {
+  const w = 220, h = 40, pad = 2;
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const range = (max - min) || 1;
+  const pts = vals.map((v, i) => {
+    const x = pad + (i / (vals.length - 1 || 1)) * (w - pad * 2);
+    const y = h - pad - ((v - min) / range) * (h - pad * 2);
+    return x.toFixed(1) + ',' + y.toFixed(1);
+  }).join(' ');
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+  svg.setAttribute('width', '100%'); svg.setAttribute('height', h);
+  const poly = document.createElementNS(ns, 'polyline');
+  poly.setAttribute('points', pts);
+  poly.setAttribute('fill', 'none');
+  poly.setAttribute('stroke', 'var(--accent, #5b5ff0)');
+  poly.setAttribute('stroke-width', '1.6');
+  svg.appendChild(poly);
+  return svg;
+}
+
+// ============ Actions ============
+function applyToSelection(fn) {
+  for (const d of state.devices) {
+    if (!d.tr || !d.tr.querySelector('.rowsel').checked) continue;
+    fn(d); d.tr.classList.add('changed');
+  }
+}
+document.getElementById('applyPrefix').addEventListener('click', () => {
+  const pfx = document.getElementById('prefix').value; if (!pfx) return;
+  const sync = document.getElementById('syncPlain').checked;
+  applyToSelection(d => {
+    if (!d.nm.value.startsWith(pfx)) d.nm.value = pfx + d.nm.value;
+    if (sync && d.dev.has('display_name_plain') && !d.pl.value.startsWith(pfx)) d.pl.value = pfx + d.pl.value;
+  });
+});
+document.getElementById('stripPrefix').addEventListener('click', () => {
+  const pfx = document.getElementById('prefix').value; if (!pfx) return;
+  applyToSelection(d => {
+    if (d.nm.value.startsWith(pfx)) d.nm.value = d.nm.value.slice(pfx.length);
+    if (d.dev.has('display_name_plain') && d.pl.value.startsWith(pfx)) d.pl.value = d.pl.value.slice(pfx.length);
+  });
+});
+document.getElementById('selAll').addEventListener('change', e => {
+  document.querySelectorAll('#tab-devices .rowsel').forEach(c => c.checked = e.target.checked);
+  document.querySelectorAll('#tab-devices .grpsel').forEach(c => { c.checked = e.target.checked; c.indeterminate = false; });
+});
+document.getElementById('custHealth').addEventListener('click', () =>
+  custSelection().forEach(c => { c.hp.value = '1.00'; c.tr.classList.add('changed'); }));
+document.getElementById('custProbation').addEventListener('click', () =>
+  custSelection().forEach(c => { c.pr.checked = false; c.tr.classList.add('changed'); }));
+document.getElementById('custSla').addEventListener('click', () =>
+  custSelection().forEach(c => { c.sla.value = '0'; c.tr.classList.add('changed'); }));
+document.getElementById('custMult').addEventListener('click', () => {
+  const v = document.getElementById('custMultVal').value;
+  custSelection().forEach(c => { c.pm.value = v; c.tr.classList.add('changed'); });
+});
+
+// Tabs
+document.getElementById('nav').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-tab]'); if (!btn) return;
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('active', b === btn));
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + btn.dataset.tab));
+});
+
+// ============ Download ============
+function performDownload() {
+  if (!state) return;
+  try {
+    const r = state.root;
+    // Devices
+    for (const d of state.devices) {
+      if (!d.nm) continue;
+      d.dev.set(d.nameKey, d.nm.value);
+      if (d.dev.has('display_name_plain')) d.dev.set('display_name_plain', d.pl.value);
+    }
+    // Customers
+    for (const c of state.customers) {
+      if (!c.nm) continue;
+      c.inner.set('name', c.nm.value);
+      const hp = parseFloat(c.hp.value); if (!isNaN(hp)) c.entry.set('health', new F(Math.min(1, Math.max(0, hp))));
+      const pm = parseFloat(c.pm.value); if (!isNaN(pm) && pm >= 0) c.entry.set('price_multiplier', new F(pm));
+      c.entry.set('on_probation', c.pr.checked);
+      const sla = parseInt(c.sla.value); if (!isNaN(sla) && sla >= 0) c.entry.set('sla_credits', sla);
+    }
+    // Player
+    for (const f of PLAYER_FIELDS) {
+      if (!f.input || !r.has(f.key)) continue;
+      const orig = r.get(f.key);
+      if (f.kind === 'bool') r.set(f.key, f.input.checked);
+      else if (f.kind === 'money') {
+        const e = parseFloat(f.input.value);
+        if (!isNaN(e) && e >= 0) r.set(f.key, BigInt(Math.round(e * 100)) * (SCALE / 100n));
+      } else if (f.kind === 'float') {
+        const v = parseFloat(f.input.value);
+        if (!isNaN(v)) r.set(f.key, new F(v));
+      } else if (f.kind === 'int') {
+        const v = parseInt(f.input.value);
+        if (!isNaN(v) && v >= 0) r.set(f.key, v);
+      } else if (f.kind === 'text') {
+        if (f.input.value) r.set(f.key, f.input.value);
+      }
+      void orig;
+    }
+    // Tuning (kept in sync between config + base_config)
+    for (const t of tuningRows) {
+      let v;
+      if (t.isB) v = t.inp.checked;
+      else {
+        const p = parseFloat(t.inp.value); if (isNaN(p)) continue;
+        v = t.isF ? new F(p) : (Number.isInteger(p) ? p : new F(p));
+      }
+      t.cfgT.set(t.k, v);
+      if (t.baseT instanceof Map && t.baseT.has(t.k)) t.baseT.set(t.k, v);
+    }
+    // Statistics
+    for (const s of statInputs) {
+      const e = parseFloat(s.inp.value);
+      if (!isNaN(e) && e >= 0) r.set(s.key, BigInt(Math.round(e * 100)) * (SCALE / 100n));
+    }
+    // Encode
+    const body = mpEncode(r);
+    const out = new Uint8Array(5 + body.length);
+    out.set(state.header); out.set(body, 5);
+    const blob = new Blob([out], { type: 'application/octet-stream' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = state.filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+
+    // Save-Name (in-game title, from load_panel.gd::_save_title -> meta.note) â€”
+    // only downloaded if a matching meta.json was found/loaded (see below).
+    if (metaState) {
+      const metaBlob = new Blob([JSON.stringify(metaState.raw, null, 2)], { type: 'application/json' });
+      const metaName = metaState.filename || (state.filename.replace(/\.save$/i, '') + '.meta.json');
+      const ma = document.createElement('a');
+      ma.href = URL.createObjectURL(metaBlob);
+      ma.download = metaName;
+      ma.click();
+      URL.revokeObjectURL(ma.href);
+    }
+  } catch (e) { alert(t('alert.errorEncoding', e.message)); console.error(e); }
+}
+
+// ---- Save-Name Popup + meta.json (in-game title = meta.note, siehe load_panel.gd::_save_title) ----
+let metaState = null;       // { raw, filename, auto }
+let metaCheckDone = false;  // true once the auto-detect attempt (success or fail) has settled
+
+function loadMetaFile(file, auto) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const raw = JSON.parse(reader.result);
+      metaState = { raw, filename: file.name, auto: !!auto };
+    } catch (err) {
+      if (!auto) alert(t('alert.metaLoadError', err.message));
+    }
+    metaCheckDone = true;
+    updateModalMetaUI();
+    updateLoadModalMetaUI();
+    updateLoadStatusBar();
+  };
+  reader.readAsText(file);
+}
+
+// Drag&Drop only: tries to find a sibling "<savename>.meta.json" next to the
+// dropped .save via the (non-standard but widely supported) Entry API. Silently
+// gives up if the browser/context doesn't support it â€” manual load in the popup
+// still works either way. Not possible for the click-to-browse file input, which
+// only ever exposes the single chosen File, no folder access.
+function tryAutoLoadMeta(saveEntry) {
+  metaCheckDone = false;
+  updateLoadStatusBar(); updateLoadModalMetaUI();
+  const giveUp = () => { metaCheckDone = true; updateLoadStatusBar(); updateLoadModalMetaUI(); };
+  if (!saveEntry || !saveEntry.isFile || typeof saveEntry.getParent !== 'function') { giveUp(); return; }
+  try {
+    saveEntry.getParent(dirEntry => {
+      const metaName = saveEntry.name.replace(/\.save$/i, '') + '.meta.json';
+      dirEntry.getFile(metaName, {}, metaEntry => {
+        metaEntry.file(f => loadMetaFile(f, true));
+      }, giveUp);
+    }, giveUp);
+  } catch (e) { giveUp(); }
+}
+
+function updateLoadStatusBar() {
+  const bar = document.getElementById('loadStatusBar');
+  const saveBadge = document.getElementById('saveStatusBadge');
+  const metaBadge = document.getElementById('metaStatusBadge');
+  if (!state) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+
+  saveBadge.className = 'statusBadge ok';
+  saveBadge.innerHTML = '<span class="dot"></span> ' + t('status.saveLoaded', esc(state.filename));
+
+  if (metaState) {
+    metaBadge.className = 'statusBadge ok';
+    metaBadge.innerHTML = '<span class="dot"></span> ' + t('meta.loadedAuto', esc(metaState.filename));
+  } else if (!metaCheckDone) {
+    metaBadge.className = 'statusBadge';
+    metaBadge.innerHTML = '<span class="dot"></span> ' + t('status.metaSearching');
+  } else {
+    metaBadge.className = 'statusBadge bad';
+    metaBadge.innerHTML = '<span class="dot"></span> ' + t('status.metaNotFound');
+  }
+}
+
+function metaStatusText() {
+  if (metaState) {
+    return '<div class="metaHighlight ok"><span class="icon">âœ…</span><div><div class="txt">' +
+      t('meta.loadedAuto', esc(metaState.filename)) + '</div><div class="sub">' +
+      t(metaState.auto ? 'meta.foundAuto' : 'meta.loadedManual') + '</div></div></div>';
+  } else if (!metaCheckDone) {
+    return '<div class="metaHighlight pending"><span class="icon">ðŸ”</span><div><div class="txt">' + t('meta.searching') + '</div></div></div>';
+  } else {
+    return '<div class="metaHighlight bad"><span class="icon">âš ï¸</span><div><div class="txt">' + t('meta.notFoundTitle') + '</div><div class="sub">' + t('meta.notFoundSub') + '</div></div></div>';
+  }
+}
+
+function updateModalMetaUI() {
+  const stateEl = document.getElementById('modalMetaState');
+  const noteInput = document.getElementById('modalNoteInput');
+  stateEl.innerHTML = metaStatusText();
+  if (metaState) {
+    noteInput.disabled = false;
+    noteInput.placeholder = '';
+    noteInput.value = metaState.raw.note || '';
+  } else {
+    noteInput.disabled = true;
+    noteInput.placeholder = t('nameModal.placeholder');
+    noteInput.value = '';
+  }
+}
+
+function updateLoadModalMetaUI() {
+  document.getElementById('loadModalMetaState').innerHTML = metaStatusText();
+}
+
+function openNameModal() {
+  updateModalMetaUI();
+  document.getElementById('nameModalOverlay').classList.add('show');
+}
+function closeNameModal() {
+  document.getElementById('nameModalOverlay').classList.remove('show');
+}
+function openLoadMetaModal() {
+  updateLoadModalMetaUI();
+  document.getElementById('loadMetaModalOverlay').classList.add('show');
+}
+function closeLoadMetaModal() {
+  document.getElementById('loadMetaModalOverlay').classList.remove('show');
+}
+
+document.getElementById('downloadBtn').addEventListener('click', openNameModal);
+document.getElementById('modalCancelBtn').addEventListener('click', closeNameModal);
+document.getElementById('nameModalOverlay').addEventListener('click', e => {
+  if (e.target.id === 'nameModalOverlay') closeNameModal();
+});
+document.getElementById('modalConfirmBtn').addEventListener('click', () => {
+  if (metaState) metaState.raw.note = document.getElementById('modalNoteInput').value;
+  performDownload();
+  closeNameModal();
+});
+document.getElementById('modalMetaFile').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (f) loadMetaFile(f, false);
+});
+
+document.getElementById('loadModalContinueBtn').addEventListener('click', closeLoadMetaModal);
+document.getElementById('loadMetaModalOverlay').addEventListener('click', e => {
+  if (e.target.id === 'loadMetaModalOverlay') closeLoadMetaModal();
+});
+document.getElementById('loadModalMetaFile').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (f) loadMetaFile(f, false);
+});
+
+// File input + Drag&Drop
+const drop = document.getElementById('drop');
+const fileInput = document.getElementById('file');
+fileInput.addEventListener('change', () => {
+  const files = [...fileInput.files];
+  const save = files.find(f => /\.save$/i.test(f.name));
+  if (!save) return;
+  metaState = null;
+  metaCheckDone = true;
+  const meta = files.find(f =>
+    f.name.toLowerCase() === save.name.replace(/\.save$/i, '.meta.json').toLowerCase());
+  loadFile(save);
+  if (meta) loadMetaFile(meta, true);
+});
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('hover'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('hover'));
+drop.addEventListener('drop', e => {
+  e.preventDefault(); drop.classList.remove('hover');
+  metaState = null;
+  let entry = null;
+  const items = e.dataTransfer.items;
+  if (items && items.length && items[0].webkitGetAsEntry) entry = items[0].webkitGetAsEntry();
+  const files = [...e.dataTransfer.files];
+  const f = files.find(file => /\.save$/i.test(file.name));
+  if (!f) return;
+  loadFile(f);
+  const meta = files.find(file =>
+    file.name.toLowerCase() === f.name.replace(/\.save$/i, '.meta.json').toLowerCase());
+  if (meta) loadMetaFile(meta, true);
+  else tryAutoLoadMeta(entry);
+});
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uptime Save Editor</title>
+<style>
+
+:root[data-theme="light"] {
+  --bg:#f4f5f7; --sidebar:#ffffff; --panel:#ffffff; --panel2:#f7f8fa; --line:#e4e7ec;
+  --text:#1a1f29; --dim:#8a93a3; --accent:#5b5ff0; --accent2:#00b894;
+  --amber:#d68300; --cyan:#0891d1; --green:#0f9960; --violet:#7c5cd6; --red:#d6413a;
+  --shadow:0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.06);
+}
+:root[data-theme="dark"] {
+  --bg:#0e1116; --sidebar:#12161d; --panel:#161b23; --panel2:#0f1319; --line:#252b35;
+  --text:#e4e8ee; --dim:#6b7585; --accent:#7d7fff; --accent2:#2dd4a7;
+  --amber:#ffb454; --cyan:#4dc3ff; --green:#4cd97b; --violet:#b58cff; --red:#ff6b6b;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 4px 12px rgba(0,0,0,.25);
+}
+:root{color-scheme:light dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,"Segoe UI",Inter,ui-sans-serif,system-ui,sans-serif;font-size:13px;line-height:1.5;
+  display:flex;min-height:100vh}
+.mono{font-family:"JetBrains Mono","Cascadia Code",ui-monospace,Consolas,monospace}
+
+/* ---- Sidebar shell ---- */
+aside{width:216px;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;padding:18px 12px;position:sticky;top:0;height:100vh}
+aside .brand{font-weight:800;font-size:14px;letter-spacing:-.01em;padding:6px 10px 18px;color:var(--text)}
+aside .brand span{color:var(--accent)}
+nav{display:flex;flex-direction:column;gap:2px;display:none}
+nav button{background:none;border:none;text-align:left;color:var(--dim);
+  font-family:inherit;font-weight:600;font-size:13px;padding:9px 10px;border-radius:8px;cursor:pointer;
+  display:flex;align-items:center;gap:9px}
+nav button::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--dim);flex-shrink:0}
+nav button:hover{background:var(--panel2);color:var(--text)}
+nav button.active{background:var(--accent);color:#fff}
+nav button.active::before{background:#fff}
+aside .spacer{flex:1}
+#themeToggle,#langToggle{background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--text);
+  font-family:inherit;font-weight:600;font-size:12px;padding:8px 10px;cursor:pointer;width:100%;text-align:left}
+#themeToggle:hover,#langToggle:hover{border-color:var(--accent)}
+
+/* ---- Main column ---- */
+.mainwrap{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);
+  padding:16px 28px;z-index:4}
+main{max-width:1100px;padding:20px 28px 100px;width:100%}
+
+.drop{border:1.5px dashed #a9b2c3;border-radius:12px;padding:30px;text-align:center;
+  color:var(--dim);cursor:pointer;transition:.15s;background:var(--panel2);font-weight:500}
+:root[data-theme="dark"] .drop{border-color:#333c4a}
+.drop:hover,.drop.hover{border-color:var(--accent);color:var(--accent)}
+.drop input{display:none}
+.fileinfo{display:none}
+.fileinfo.show{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.fileinfo .fname{color:var(--accent);font-weight:700}
+.fileinfo .meta{color:var(--dim);font-size:12px}
+#reloadBtn{background:var(--panel2);border:1px solid var(--line);border-radius:7px;color:var(--text);
+  font-family:inherit;font-weight:600;font-size:12px;padding:6px 12px;cursor:pointer;margin-top:0!important}
+#reloadBtn:hover{border-color:var(--accent);color:var(--accent)}
+
+.tab{display:none} .tab.active{display:block}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;
+  margin-bottom:16px;box-shadow:var(--shadow)}
+.panel h3{margin:0 0 14px;font-size:12px;letter-spacing:.06em;color:var(--dim);font-weight:700;text-transform:uppercase}
+.grid{display:grid;grid-template-columns:220px 1fr;gap:11px 14px;align-items:center}
+.grid label{color:var(--text);font-weight:500}
+input[type=text],input[type=number]{background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+  color:var(--text);font-family:inherit;font-size:13px;padding:7px 11px;width:220px;max-width:100%}
+input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent)}
+input.dirty{border-color:var(--amber)}
+button{background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--text);
+  font-family:inherit;font-weight:600;font-size:12.5px;padding:8px 14px;cursor:pointer;transition:.12s}
+button:hover{border-color:var(--accent);color:var(--accent)}
+button.primary{border-color:var(--accent);color:#fff;background:var(--accent)}
+button.primary:hover{filter:brightness(1.08)}
+button.done{border-color:var(--green);color:var(--green);pointer-events:none}
+label.chk{display:inline-flex;align-items:center;gap:6px;color:var(--dim);cursor:pointer;user-select:none;font-weight:500}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--panel);
+  border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:16px;box-shadow:var(--shadow)}
+.toolbar .lbl{color:var(--dim);font-weight:500} .toolbar input{width:140px}
+.group{margin-bottom:22px}
+.group h2{font-size:12.5px;font-weight:700;margin:0 0 8px;display:flex;align-items:center;gap:8px;color:var(--text)}
+.group h2 .cnt{color:var(--dim);font-weight:500}
+.group h2 .grpsel{margin:0 2px 0 0;cursor:pointer}
+.led{width:8px;height:8px;border-radius:50%;display:inline-block}
+.t-host{color:var(--green)} .t-switch{color:var(--cyan)} .t-gw{color:var(--amber)}
+.t-edd{color:var(--violet)} .t-fw{color:var(--red)} .t-rack{color:var(--accent)}
+.t-az{color:#b08900} .t-region{color:#b6338f} .t-cust{color:var(--accent2)}
+table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);
+  border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);font-family:"JetBrains Mono",monospace}
+th{color:var(--dim);font-weight:600;font-size:11px;letter-spacing:.04em;background:var(--panel2);
+  font-family:inherit}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--panel2)}
+td.id,td.az{color:var(--dim);width:56px}
+td input[type=text]{width:100%} td input[type=number]{width:90px}
+td.sel{width:30px} td .arch{color:var(--dim);font-size:11px}
+tr.changed input{border-color:var(--amber)}
+.search{width:280px;margin-bottom:12px}
+.stat{color:var(--dim);font-size:12px;margin-left:8px}
+#downloadBtn{display:none;position:fixed;bottom:24px;right:28px;box-shadow:0 8px 24px rgba(91,95,240,.35);
+  z-index:5;padding:11px 22px;border-radius:10px;font-size:13px}
+#downloadBtn.show{display:block}
+.hint{color:var(--dim);font-size:12px;margin-top:8px}
+.rack{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
+.rack h4{margin:0 0 8px;font-size:12.5px;font-weight:700;display:flex;justify-content:space-between;color:var(--text)}
+.rack h4 .raz{color:var(--dim);font-weight:500}
+.rack .frame{display:grid;grid-template-columns:26px 1fr;gap:0 6px}
+.rack .uno{color:var(--dim);font-size:9px;text-align:right;line-height:16px;height:16px;border-bottom:1px solid var(--line);font-family:"JetBrains Mono",monospace}
+.rack .slot{height:16px;border-bottom:1px solid var(--line);background:var(--panel2)}
+.rack .dev{border-left:3px solid;border-bottom:1px solid var(--line);background:var(--panel2);padding:0 8px;
+  font-size:11px;display:flex;align-items:center;justify-content:space-between;overflow:hidden;white-space:nowrap;
+  font-family:"JetBrains Mono",monospace}
+.rack .dev .du{color:var(--dim);font-size:9px;margin-left:6px;flex-shrink:0}
+.rack .fill{color:var(--dim);font-size:11px;margin-top:8px}
+.rack .dev .rvnm{background:transparent;border:1px solid transparent;border-radius:5px;color:var(--text);
+  font-family:"JetBrains Mono",monospace;font-size:11px;padding:1px 4px;width:100%;min-width:0}
+.rack .dev .rvnm:hover{border-color:var(--line);background:var(--panel)}
+.rack .dev .rvnm:focus{background:var(--panel);border-color:var(--accent);outline:none}
+
+.topbar.centered{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:60vh;position:static;border-bottom:none}
+.drop.big{width:440px;max-width:90%;padding:56px 40px;font-size:16px;font-weight:700}
+.drop.big .sub{display:block;margin-top:8px;font-size:12px;color:var(--dim);font-weight:400}
+
+/* ---- Load-Status Badges ---- */
+.statusBadge{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;
+  padding:4px 11px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);color:var(--dim)}
+.statusBadge .dot{width:7px;height:7px;border-radius:50%;background:var(--dim);flex-shrink:0}
+.statusBadge.ok{color:var(--green);border-color:var(--green)}
+.statusBadge.ok .dot{background:var(--green)}
+.statusBadge.bad{color:var(--red);border-color:var(--red)}
+.statusBadge.bad .dot{background:var(--red)}
+
+/* ---- Save-Name Popup ---- */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,12,16,.55);
+  align-items:center;justify-content:center;z-index:20}
+.modal-overlay.show{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);
+  width:420px;max-width:90vw;padding:20px 22px}
+.modal h3{margin:0 0 6px;font-size:14px;font-weight:700;color:var(--text)}
+.modal p.desc{margin:0 0 16px;font-size:12px;color:var(--dim);line-height:1.5}
+.modal .field{margin-bottom:14px}
+.modal .field label{display:block;font-size:12px;color:var(--dim);font-weight:500;margin-bottom:6px}
+.modal input[type=text]{width:100%}
+.modal .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+
+.metaHighlight{display:flex;align-items:center;gap:12px;border-radius:10px;padding:13px 15px;
+  margin:2px 0 14px;border:1.5px solid var(--line);background:var(--panel2)}
+.metaHighlight .icon{font-size:22px;flex-shrink:0;line-height:1}
+.metaHighlight .txt{font-size:13px;font-weight:700;color:var(--text)}
+.metaHighlight .sub{font-size:11px;font-weight:500;color:var(--dim);margin-top:2px}
+.metaHighlight.pending{border-style:dashed}
+.metaHighlight.pending .txt{color:var(--dim)}
+.metaHighlight.ok{border-color:var(--green);background:color-mix(in srgb, var(--green) 12%, var(--panel2))}
+.metaHighlight.ok .txt{color:var(--green)}
+.metaHighlight.bad{border-color:var(--red);background:color-mix(in srgb, var(--red) 10%, var(--panel2))}
+.metaHighlight.bad .txt{color:var(--red)}
+.metaLoadBtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  font-size:13px;font-weight:700;padding:12px 14px;border-radius:9px;cursor:pointer;
+  border:1.5px dashed var(--accent);color:var(--accent);background:transparent;transition:.12s}
+.metaLoadBtn:hover{background:color-mix(in srgb, var(--accent) 12%, transparent)}
+</style>
+</head>
 
 </head>
 <body data-theme="dark">
