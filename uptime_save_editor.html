@@ -165,9 +165,62 @@ tr.changed input{border-color:var(--amber)}
   font-size:13px;font-weight:700;padding:12px 14px;border-radius:9px;cursor:pointer;
   border:1.5px dashed var(--accent);color:var(--accent);background:transparent;transition:.12s}
 .metaLoadBtn:hover{background:color-mix(in srgb, var(--accent) 12%, transparent)}
-</style>
-</head>
 
+/* ---- Companion dashboard skin ---- */
+:root[data-theme="dark"] {
+  --bg:#0d0e0f; --sidebar:#101112; --panel:#171819; --panel2:#111213; --line:#2b2d2f;
+  --text:#e8e3da; --dim:#8d8b86; --accent:#d88938; --accent2:#7fc36a;
+  --amber:#e6a24a; --cyan:#4aa8d8; --green:#83c56d; --violet:#b394d6; --red:#d9665d;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 22px rgba(0,0,0,.16);
+}
+:root[data-theme="light"] {
+  --bg:#ecebe8; --sidebar:#171717; --panel:#f8f7f4; --panel2:#eeece8; --line:#d3d0c9;
+  --text:#242321; --dim:#77736b; --accent:#b96724; --accent2:#3d8a42;
+  --amber:#a96b1d; --cyan:#237da8; --green:#3d8a42; --violet:#76569b; --red:#b5413b;
+  --shadow:0 1px 2px rgba(35,31,25,.08),0 5px 16px rgba(35,31,25,.08);
+}
+body{font-family:"Trebuchet MS","Segoe UI",sans-serif;background:var(--bg)}
+aside{width:236px;background:var(--sidebar);border-right:1px solid #292a2a;padding:16px 12px}
+aside .brand{font-family:Georgia,serif;font-size:17px;letter-spacing:.02em;color:#78bd68;padding:2px 10px 22px}
+aside .brand span{display:block;color:#d88938;font-family:"Trebuchet MS",sans-serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;margin-top:2px}
+nav button{border-radius:4px;color:#aaa69e;font-size:12px;padding:8px 10px;gap:8px}
+nav button::before{width:7px;height:7px;border-radius:1px;background:#66625d}
+nav button:hover{background:#242322;color:#eee9df}
+nav button.active{background:#3b3027;color:#fff1df;border-left:3px solid var(--accent);padding-left:7px}
+nav button.active::before{background:var(--accent)}
+#themeToggle,#langToggle{background:#1b1c1c;border-color:#303130;border-radius:4px;color:#bcb8b0;font-size:11px;padding:7px 10px}
+.topbar{background:var(--bg);border-bottom:1px solid var(--line);padding:14px 28px}
+main{max-width:1400px;padding:16px 28px 100px}
+.panel,.toolbar,.rack{border-radius:6px;padding:16px 18px;margin-bottom:12px}
+.panel h3{font-size:11px;letter-spacing:.1em;color:var(--accent);margin-bottom:12px}
+.grid{grid-template-columns:210px 1fr;gap:9px 14px}
+input[type=text],input[type=number]{border-radius:4px;background:var(--panel2);padding:7px 10px}
+button{border-radius:4px;font-size:12px;padding:7px 12px}
+button.primary{background:var(--accent);border-color:var(--accent)}
+.toolbar{background:var(--panel);border-radius:6px}
+table{border-radius:6px;box-shadow:none}
+th,td{padding:8px 10px}
+th{font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+tr:hover td{background:#242422}
+#downloadBtn{border-radius:4px;background:var(--accent);border-color:var(--accent);box-shadow:0 8px 20px rgba(216,137,56,.22)}
+.statusBadge{border-radius:4px;padding:4px 9px}
+.drop{border-radius:6px}
+@media (max-width:760px){
+  body{display:block}
+  aside{width:100%;height:auto;position:static;border-right:0;border-bottom:1px solid var(--line);padding:10px}
+  aside .brand{padding:2px 8px 10px}
+  nav{display:grid!important;grid-template-columns:repeat(4,1fr);gap:3px}
+  nav button{font-size:11px;padding:7px 6px;justify-content:center}
+  nav button.active{padding-left:3px}
+  aside .spacer{display:none}
+  #langToggle,#themeToggle{display:inline-block;width:49%;margin-top:8px!important}
+  .topbar{padding:12px 14px}
+  main{padding:12px 14px 90px}
+  .grid{grid-template-columns:1fr}
+  .drop.big{width:100%;padding:38px 20px}
+  #downloadBtn{right:14px;bottom:14px}
+}
+</style>
 </head>
 <body data-theme="dark">
 <aside>
@@ -179,7 +232,7 @@ tr.changed input{border-color:var(--amber)}
     <button data-tab="customers" data-i18n="nav.customers">Customers</button>
     <button data-tab="player" data-i18n="nav.player">Player</button>
     <button data-tab="repair" data-i18n="nav.repair">Repair</button>
-    <button data-tab="tuning" data-i18n="nav.tuning">Tuning</button>
+    <button id="tuningNav" data-tab="tuning" data-i18n="nav.tuning">Tuning</button>
     <button data-tab="stats" data-i18n="nav.stats">Statistics</button>
   </nav>
   <div class="spacer"></div>
@@ -191,7 +244,7 @@ tr.changed input{border-color:var(--amber)}
     <label class="drop big" id="drop">
       <span data-i18n="drop.title">Open savegame</span>
       <span class="sub" data-i18n="drop.sub">Drop your .save file here or click to browse</span>
-      <input type="file" id="file" accept=".save">
+      <input type="file" id="file" accept=".save,.json" multiple>
     </label>
     <div class="fileinfo" id="fileinfo">
       <span class="fname" id="fname"></span>
@@ -473,6 +526,7 @@ const I18N = {
     'meta.notFoundSub': 'please load it manually below',
     'alert.metaLoadError': 'Error loading meta.json: {0}',
     'alert.nicUpgrade': 'NIC upgrade: added {0} Sfp28 25G module(s) ({1} ports) across {2} hosts checked.',
+    'alert.nic10g': 'NIC conversion: set {0} SFP+ 10G module(s) ({1} ports) across {2} hosts checked.',
     'alert.notUptimeSave': 'Not an Uptime save',
     'alert.errorLoading': 'Error loading: {0}',
     'alert.errorEncoding': 'Error encoding: {0}',
@@ -490,7 +544,7 @@ const I18N = {
     'devices.stripPrefix': 'Strip prefix from selection',
     'devices.syncPlain': 'sync display_name_plain',
     'common.selectAll': 'select all',
-    'devices.th.id': 'ID', 'devices.th.az': 'AZ', 'devices.th.name': 'Name',
+    'devices.th.id': 'ID', 'devices.th.az': 'AZ', 'devices.th.name': 'Name', 'devices.th.rack': 'Rack', 'devices.th.uheight': 'U-position',
     'devices.th.plain': 'display_name_plain',
     'group.hosts': 'HOSTS', 'group.switches': 'SWITCHES', 'group.gateways': 'GATEWAYS',
     'group.edds': 'EDDS / PATCH', 'group.appliances': 'SECURITY APPLIANCES', 'group.racks': 'RACKS',
@@ -540,7 +594,9 @@ const I18N = {
     'repair.clearIncidents': 'Clear active incidents', 'repair.releaseMaintenance': 'Release maintenance hosts',
     'repair.resetOvertemp': 'Reset over-temperature', 'repair.clearSiem': 'Clear SIEM storage (TB)',
     'repair.clearChurn': 'Clear churn history &amp; rep loss',
-    'repair.upgradeNics': 'Upgrade all host NICs to 25G Sfp28 (fills up to 2 modules)',
+    'repair.upgradeNics': 'Set all host NICs to 25G SFP28 (fills up to 2 modules)',
+    'repair.convertNics10g': 'Set all host NICs to 10G SFP+ (fills up to 2 modules)',
+    'repair.hostNicStatus': '{0} / {1} hosts',
     'repair.current': 'current: {0}',
 
     'tuning.filterPlaceholder': 'Filter… (e.g. rep_, health, failure)',
@@ -580,6 +636,7 @@ const I18N = {
     'meta.notFoundSub': 'bitte unten manuell laden',
     'alert.metaLoadError': 'Fehler beim Laden der meta.json: {0}',
     'alert.nicUpgrade': 'NIC-Upgrade: {0} Sfp28-25G-Module ({1} Ports) ergänzt (von {2} Hosts geprüft).',
+    'alert.nic10g': 'NIC-Konvertierung: {0} SFP+-10G-Module ({1} Ports) gesetzt (von {2} Hosts geprüft).',
     'alert.notUptimeSave': 'Keine gültige Uptime-Save-Datei',
     'alert.errorLoading': 'Fehler beim Laden: {0}',
     'alert.errorEncoding': 'Fehler beim Kodieren: {0}',
@@ -597,7 +654,7 @@ const I18N = {
     'devices.stripPrefix': 'Präfix aus Auswahl entfernen',
     'devices.syncPlain': 'display_name_plain synchronisieren',
     'common.selectAll': 'alle auswählen',
-    'devices.th.id': 'ID', 'devices.th.az': 'AZ', 'devices.th.name': 'Name',
+    'devices.th.id': 'ID', 'devices.th.az': 'AZ', 'devices.th.name': 'Name', 'devices.th.rack': 'Rack', 'devices.th.uheight': 'U-Position',
     'devices.th.plain': 'display_name_plain',
     'group.hosts': 'HOSTS', 'group.switches': 'SWITCHES', 'group.gateways': 'GATEWAYS',
     'group.edds': 'EDDS / PATCH', 'group.appliances': 'SECURITY APPLIANCES', 'group.racks': 'RACKS',
@@ -648,6 +705,8 @@ const I18N = {
     'repair.resetOvertemp': 'Übertemperatur zurücksetzen', 'repair.clearSiem': 'SIEM-Speicher leeren (TB)',
     'repair.clearChurn': 'Kündigungsverlauf &amp; Rep-Verlust löschen',
     'repair.upgradeNics': 'Alle Host-NICs auf 25G Sfp28 aufrüsten (bis zu 2 Module)',
+    'repair.convertNics10g': 'Alle Host-NICs auf 10G SFP+ setzen (bis zu 2 Module)',
+    'repair.hostNicStatus': '{0} / {1} Hosts',
     'repair.current': 'aktuell: {0}',
 
     'tuning.filterPlaceholder': 'Filter… (z.B. rep_, health, failure)',
@@ -769,7 +828,7 @@ function loadFile(file) {
   reader.onload = () => {
     try {
       const buf = new Uint8Array(reader.result);
-      if (new TextDecoder().decode(buf.slice(0, 4)) !== 'CSIM') throw new Error(t('alert.notUptimeSave'));
+      if (new TextDecoder().decode(buf.slice(0, 5)) !== 'CSIM3') throw new Error(t('alert.notUptimeSave'));
       const [root] = mpDecode(buf, 5);
       state = { header: buf.slice(0, 5), root, filename: file.name,
                 devices: collectDevices(root), customers: collectCustomers(root) };
@@ -787,7 +846,7 @@ function renderAll(file) {
   document.getElementById('fsize').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
   document.getElementById('fmeta').textContent = t('fileinfo.summary',
     r.get('scenario_id') || '?', r.get('current_site') || '?', state.devices.length, state.customers.length);
-  document.getElementById('nav').style.display = 'flex';
+  document.getElementById('nav').style.display = 'flex'; const tuningAvailable = r.get('scenario_id') === 'sandbox'; const tuningNav = document.getElementById('tuningNav'); tuningNav.style.display = tuningAvailable ? '' : 'none'; document.getElementById('tab-tuning').style.display = tuningAvailable ? '' : 'none'; if (!tuningAvailable && tuningNav.classList.contains('active')) { document.querySelector('button[data-tab="devices"]').click(); }
   document.getElementById('downloadBtn').classList.add('show');
   updateLoadStatusBar();
   openLoadMetaModal();
@@ -849,24 +908,54 @@ function renderDevices() {
       '<span class="led ' + g.cls + '"></span>' + t(g.labelKey) +
       ' <span class="cnt">(' + devs.length + ')</span></h2>';
     const tbl = document.createElement('table');
+    const showPlacement = !['rack', 'az', 'region'].includes(g.key);
     tbl.innerHTML = '<tr><th></th><th>' + t('devices.th.id') + '</th><th>' + t('devices.th.az') +
-      '</th><th>' + t('devices.th.name') + '</th><th>' + t('devices.th.plain') + '</th></tr>';
+      '</th>' + (showPlacement ? '<th>' + t('devices.th.rack') + '</th><th>' + t('devices.th.uheight') + '</th>' : '') +
+      '<th>' + t('devices.th.name') + '</th>' +
+      '<th>' + t('devices.th.plain') + '</th></tr>';
+    const rackById = new Map((state.root.get('racks') || []).map(r => [r.get('id'), r]));
     for (const d of devs) {
       const tr = document.createElement('tr');
+      const placement = rackPlacement(d.type, d.dev);
+      const rackInfo = placement && rackById.has(placement.rackId)
+        ? '#' + placement.rackId + ' ' + (rackById.get(placement.rackId).get('name') || 'Rack')
+        : '–';
+      const uSize = uSizeOf(d.dev) || 1;
+      const uPlacement = placement ? 'U' + placement.startU + ' (' + uSize + 'U)' : '–';
       tr.innerHTML =
         '<td class="sel"><input type="checkbox" class="rowsel" checked></td>' +
         '<td class="id">' + d.dev.get('id') + '</td>' +
         '<td class="az">' + (d.az ?? '–') + '</td>' +
+        (showPlacement ? '<td class="rack" data-rack-id="' + (placement ? placement.rackId : '') + '">' + rackInfo + '</td>' +
+          '<td class="uheight">' + uPlacement + '</td>' : '') +
         '<td><input type="text" class="nm"></td>' +
         '<td><input type="text" class="pl"></td>';
       const nm = tr.querySelector('.nm'), pl = tr.querySelector('.pl');
       nm.value = d.dev.get(d.nameKey);
       if (d.dev.has('display_name_plain')) pl.value = d.dev.get('display_name_plain');
       else pl.parentElement.innerHTML = '<span style="color:var(--dim)">–</span>';
+      const originalName = nm.value;
+      const originalPlain = d.dev.has('display_name_plain') ? pl.value : null;
       const mark = () => tr.classList.toggle('changed',
-        nm.value !== d.dev.get(d.nameKey) ||
-        (d.dev.has('display_name_plain') && pl.value !== d.dev.get('display_name_plain')));
-      nm.addEventListener('input', mark); pl.addEventListener('input', mark);
+        nm.value !== originalName ||
+        (d.dev.has('display_name_plain') && pl.value !== originalPlain));
+      nm.addEventListener('input', () => {
+        d.dev.set(d.nameKey, nm.value);
+        if (d.rvnm && d.rvnm.value !== nm.value) d.rvnm.value = nm.value;
+        if (d.type === 'rack') {
+          document.querySelectorAll('.rack-name[data-rack-id="' + d.dev.get('id') + '"]').forEach(input => {
+            if (input.value !== nm.value) input.value = nm.value;
+          });
+          document.querySelectorAll('.rack[data-rack-id="' + d.dev.get('id') + '"]').forEach(cell => {
+            cell.textContent = '#' + d.dev.get('id') + ' ' + nm.value;
+          });
+        }
+        mark();
+      });
+      pl.addEventListener('input', () => {
+        if (d.dev.has('display_name_plain')) d.dev.set('display_name_plain', pl.value);
+        mark();
+      });
       d.tr = tr; d.nm = nm; d.pl = pl;
       tbl.appendChild(tr);
     }
@@ -905,6 +994,11 @@ function rackPlacement(type, dev) {
   const pl = dev.get('placement');
   if (pl instanceof Map && pl.get('Rack') instanceof Map) {
     const r = pl.get('Rack');
+    return { rackId: r.get('rack_id'), startU: r.get('start_u') ?? 1 };
+  }
+  const mount = dev.get('mount');
+  if (mount instanceof Map && mount.get('Rack') instanceof Map) {
+    const r = mount.get('Rack');
     return { rackId: r.get('rack_id'), startU: r.get('start_u') ?? 1 };
   }
   return null;
@@ -948,8 +1042,21 @@ function renderRackView() {
     }
     const el = document.createElement('div');
     el.className = 'rack';
-    el.innerHTML = '<h4><span>' + esc(rack.get('name')) + ' <span class="raz">#' + rack.get('id') + '</span></span>' +
+    el.innerHTML = '<h4><span><span class="raz">#' + rack.get('id') + '</span> <input type="text" class="rack-name" data-rack-id="' + rack.get('id') + '"></span>' +
       '<span class="raz">AZ ' + rack.get('az_id') + '</span></h4>';
+    const rackName = el.querySelector('.rack-name');
+    rackName.value = rack.get('name') || '';
+    rackName.addEventListener('input', () => {
+      rack.set('name', rackName.value);
+      const rackDevice = state.devices.find(d => d.type === 'rack' && d.dev.get('id') === rack.get('id'));
+      if (rackDevice && rackDevice.nm && rackDevice.nm.value !== rackName.value) {
+        rackDevice.nm.value = rackName.value;
+        rackDevice.nm.dispatchEvent(new Event('input'));
+      }
+      document.querySelectorAll('.rack[data-rack-id="' + rack.get('id') + '"]').forEach(cell => {
+        cell.textContent = '#' + rack.get('id') + ' ' + rackName.value;
+      });
+    });
     const frame = document.createElement('div');
     frame.className = 'frame';
     for (let u = cap; u >= 1; u--) {
@@ -962,10 +1069,10 @@ function renderRackView() {
         dv.style.borderLeftColor = DEV_COLORS[cell.dev.type];
         dv.style.height = (cell.span * 16) + 'px';
         dv.innerHTML = '<input type="text" class="rvnm"><span class="du">' +
-          (cell.span > 1 ? 'U' + cell.dev.startU + '–' + (cell.dev.startU + cell.span - 1) : 'U' + cell.dev.startU) +
-          ' · ' + cell.span + 'U</span>';
+          'U' + cell.dev.startU + ' (' + cell.span + 'U)</span>';
         const rvnm = dv.querySelector('.rvnm');
         const ref = cell.dev.ref;
+        ref.rvnm = rvnm;
         rvnm.value = ref.nm ? ref.nm.value : cell.dev.name;
         rvnm.addEventListener('input', () => {
           if (ref.nm && ref.nm.value !== rvnm.value) {
@@ -1092,42 +1199,177 @@ function upgradeAllHostNics(r) {
   const ports = r.get('ports');
   if (!Array.isArray(hosts) || !(ports instanceof Map)) return;
   let nextPortId = num(r.get('next_port_id'));
-  let addedModules = 0, addedPorts = 0;
+  let changedModules = 0, changedPorts = 0;
   for (const h of hosts) {
     const mods = h.get('nic_modules') || [];
     const existingCount = mods.length;
     const toAdd = Math.max(0, 2 - existingCount);
-    if (toAdd === 0) continue;
     const newMods = mods.slice();
     for (let m = 0; m < toAdd; m++) {
       const moduleIndex = existingCount + m;
-      const modMap = new Map([['media', 'Sfp28'], ['link_capacity_gbps', 25], ['port_count', 2]]);
-      newMods.push(modMap);
-      addedModules++;
+      newMods.push(new Map([['media', 'Sfp28'], ['link_capacity_gbps', 25], ['port_count', 2]]));
+    }
+    for (let moduleIndex = 0; moduleIndex < Math.min(2, newMods.length); moduleIndex++) {
+      const mod = newMods[moduleIndex];
+      if (mod.get('media') !== 'Sfp28' || mod.get('link_capacity_gbps') !== 25) changedModules++;
+      mod.set('media', 'Sfp28');
+      mod.set('link_capacity_gbps', 25);
+      mod.set('port_count', 2);
       const baseIdx = 6 + moduleIndex * 2;
       for (let pn = 0; pn < 2; pn++) {
-        const pid = nextPortId++;
-        const counters = new Map([
-          ['bytes_egress_total', 0], ['bytes_ingress_total', 0],
-          ['errors_lifetime', 0], ['last_traffic_at', null], ['link_flaps', 0],
-        ]);
-        const portMap = new Map([
-          ['saturated', false], ['id', pid], ['owner', new Map([['Host', h.get('id')]])],
-          ['index', baseIdx + pn], ['kind', 'NetworkData'], ['media', 'Sfp28'],
-          ['link_capacity_gbps', 25], ['state', 'Down'], ['connected', []],
-          ['breakout', null], ['counters', counters],
-        ]);
-        ports.set(pid, portMap);
-        addedPorts++;
+        const index = baseIdx + pn;
+        const port = [...ports.values()].find(p => {
+          const owner = p.get('owner');
+          return owner instanceof Map && owner.get('Host') === h.get('id') &&
+            p.get('index') === index && p.get('kind') === 'NetworkData';
+        });
+        if (port) {
+          if (port.get('media') !== 'Sfp28' || port.get('link_capacity_gbps') !== 25) changedPorts++;
+          port.set('media', 'Sfp28');
+          port.set('link_capacity_gbps', 25);
+        } else {
+          const pid = nextPortId++;
+          const portMap = new Map([
+            ['saturated', false], ['id', pid], ['owner', new Map([['Host', h.get('id')]])],
+            ['index', index], ['kind', 'NetworkData'], ['media', 'Sfp28'],
+            ['link_capacity_gbps', 25], ['state', 'Down'], ['connected', []],
+            ['breakout', null], ['counters', new Map([
+              ['bytes_egress_total', 0], ['bytes_ingress_total', 0],
+              ['errors_lifetime', 0], ['last_traffic_at', null], ['link_flaps', 0],
+            ])],
+          ]);
+          ports.set(pid, portMap);
+          changedPorts++;
+        }
       }
     }
     h.set('nic_modules', newMods);
   }
+  updateHostNicCables(r, 'Sfp28', 25);
   r.set('next_port_id', nextPortId);
-  alert(t('alert.nicUpgrade', addedModules, addedPorts, hosts.length));
+  alert(t('alert.nicUpgrade', changedModules, changedPorts, hosts.length));
+}
+
+function convertAllHostNics10g(r) {
+  const pool = r.get('pool');
+  const hosts = pool ? pool.get('hosts') : null;
+  const ports = r.get('ports');
+  if (!Array.isArray(hosts) || !(ports instanceof Map)) return;
+  let changedModules = 0, changedPorts = 0;
+  let nextPortId = num(r.get('next_port_id'));
+  for (const h of hosts) {
+    const mods = (h.get('nic_modules') || []).slice();
+    while (mods.length < 2) mods.push(new Map([['media', 'SfpPlus'], ['link_capacity_gbps', 10], ['port_count', 2]]));
+    for (const mod of mods) {
+      if (!(mod instanceof Map)) continue;
+      if (mod.get('media') !== 'SfpPlus' || mod.get('link_capacity_gbps') !== 10) changedModules++;
+      mod.set('media', 'SfpPlus');
+      mod.set('link_capacity_gbps', 10);
+      mod.set('port_count', 2);
+    }
+    h.set('nic_modules', mods);
+    for (let moduleIndex = 0; moduleIndex < 2; moduleIndex++) {
+      for (let pn = 0; pn < 2; pn++) {
+        const index = 6 + moduleIndex * 2 + pn;
+        const port = [...ports.values()].find(p => {
+          const owner = p.get('owner');
+          return owner instanceof Map && owner.get('Host') === h.get('id') &&
+            p.get('index') === index && p.get('kind') === 'NetworkData';
+        });
+        if (port) {
+          if (port.get('media') !== 'SfpPlus' || port.get('link_capacity_gbps') !== 10) changedPorts++;
+          port.set('media', 'SfpPlus');
+          port.set('link_capacity_gbps', 10);
+        } else {
+          const portMap = new Map([
+            ['saturated', false], ['id', nextPortId], ['owner', new Map([['Host', h.get('id')]])],
+            ['index', index], ['kind', 'NetworkData'], ['media', 'SfpPlus'],
+            ['link_capacity_gbps', 10], ['state', 'Down'], ['connected', []],
+            ['breakout', null], ['counters', new Map([
+              ['bytes_egress_total', 0], ['bytes_ingress_total', 0],
+              ['errors_lifetime', 0], ['last_traffic_at', null], ['link_flaps', 0],
+            ])],
+          ]);
+          ports.set(nextPortId++, portMap);
+          changedPorts++;
+        }
+      }
+    }
+  }
+  updateHostNicCables(r, 'SfpPlus', 10);
+  r.set('next_port_id', nextPortId);
+  alert(t('alert.nic10g', changedModules, changedPorts, hosts.length));
+}
+
+function hostNicStatus(r, media, capacity) {
+  const hosts = r.get('pool')?.get('hosts') || [];
+  const current = hosts.filter(h => (h.get('nic_modules') || []).some(m =>
+    m instanceof Map && m.get('media') === media && m.get('link_capacity_gbps') === capacity)).length;
+  return t('repair.hostNicStatus', current, hosts.length);
+}
+
+function updateHostNicCables(r, media, capacity) {
+  const ports = r.get('ports');
+  const cables = r.get('cables') || [];
+  if (!(ports instanceof Map) || !Array.isArray(cables)) return;
+  const hostModulePortIds = new Set([...ports.values()].filter(p => {
+    const owner = p.get('owner');
+    return owner instanceof Map && owner.has('Host') && p.get('kind') === 'NetworkData' && p.get('index') >= 6 &&
+      p.get('media') === media && p.get('link_capacity_gbps') === capacity;
+  }).map(p => p.get('id')));
+  const cableKind = capacity === 25 ? 'Dac25G' : 'Dac';
+  for (const cable of cables) {
+    const a = cable.get('a');
+    const b = cable.get('b');
+    if (cable.get('kind') === 'Power' || !(a instanceof Map) || !(b instanceof Map)) continue;
+    if (hostModulePortIds.has(cable.get('a_port')) || hostModulePortIds.has(cable.get('b_port'))) {
+      cable.set('kind', cableKind);
+    }
+  }
+}
+
+function captureNicState(r) {
+  const hosts = r.get('pool')?.get('hosts') || [];
+  const ports = r.get('ports');
+  return {
+    nextPortId: r.get('next_port_id'),
+    modules: hosts.map(h => ({ host: h, nicModules: h.get('nic_modules'), values: (h.get('nic_modules') || []).map(m => ({ map: m, media: m.get('media'), capacity: m.get('link_capacity_gbps'), portCount: m.get('port_count') })) })),
+    ports: ports instanceof Map ? [...ports.values()].filter(p => {
+      const owner = p.get('owner');
+      return owner instanceof Map && owner.has('Host') && p.get('kind') === 'NetworkData' && p.get('index') >= 6;
+    }).map(p => ({ port: p, media: p.get('media'), capacity: p.get('link_capacity_gbps') })) : [],
+    cables: (r.get('cables') || []).filter(c => c instanceof Map && c.get('kind') !== 'Power' &&
+      ((c.get('a') instanceof Map && c.get('a').has('HostNic')) ||
+       (c.get('b') instanceof Map && c.get('b').has('HostNic')))).map(c => ({ cable: c, kind: c.get('kind') })),
+    portIds: ports instanceof Map ? new Set(ports.keys()) : new Set(),
+  };
+}
+
+function restoreNicState(r, snapshot) {
+  if (!snapshot) return;
+  const ports = r.get('ports');
+  for (const item of snapshot.modules) {
+    item.host.set('nic_modules', item.nicModules);
+    for (const value of item.values) {
+      value.map.set('media', value.media);
+      value.map.set('link_capacity_gbps', value.capacity);
+      value.map.set('port_count', value.portCount);
+    }
+  }
+  if (ports instanceof Map) {
+    for (const item of snapshot.ports) {
+      item.port.set('media', item.media);
+      item.port.set('link_capacity_gbps', item.capacity);
+    }
+    for (const id of [...ports.keys()]) if (!snapshot.portIds.has(id)) ports.delete(id);
+  }
+  for (const item of snapshot.cables) item.cable.set('kind', item.kind);
+  r.set('next_port_id', snapshot.nextPortId);
 }
 
 let repairActions = [];
+let selectedNicAction = null;
+let nicSnapshot = null;
 function renderRepair() {
   const r = state.root;
   const list = document.getElementById('repairList');
@@ -1144,17 +1386,41 @@ function renderRepair() {
     { labelKey: 'repair.clearChurn', count: (r.get('recent_churns') || []).length,
       run: () => { r.set('recent_churns', []); r.set('churn_rep_loss_hour', new F(0)); } },
     { labelKey: 'repair.upgradeNics',
-      count: ((r.get('pool')?.get('hosts')) || []).filter(h => ((h.get('nic_modules') || []).length) < 2).length,
+      count: hostNicStatus(r, 'Sfp28', 25),
+      nicStatus: true,
       run: () => upgradeAllHostNics(r) },
+    { labelKey: 'repair.convertNics10g',
+      count: hostNicStatus(r, 'SfpPlus', 10),
+      nicStatus: true,
+      run: () => convertAllHostNics10g(r) },
   ];
+  selectedNicAction = null;
+  nicSnapshot = null;
   for (const a of repairActions) {
     const row = document.createElement('div');
     row.style.display = 'flex'; row.style.alignItems = 'center'; row.style.gap = '12px';
     const btn = document.createElement('button');
     btn.innerHTML = t(a.labelKey);
     const stat = document.createElement('span'); stat.className = 'stat';
-    stat.textContent = t('repair.current', a.count);
-    btn.addEventListener('click', () => { a.run(); btn.classList.add('done'); btn.innerHTML = '✓ ' + t(a.labelKey); stat.textContent = t('repair.current', 0); });
+    stat.textContent = a.nicStatus ? a.count : t('repair.current', a.count);
+    btn.addEventListener('click', () => {
+      if (a.nicStatus && !selectedNicAction) nicSnapshot = captureNicState(r);
+      if (a.nicStatus && selectedNicAction && selectedNicAction !== a.labelKey) restoreNicState(r, nicSnapshot);
+      a.run(); btn.classList.add('done'); btn.innerHTML = '✓ ' + t(a.labelKey);
+      stat.textContent = a.nicStatus ? hostNicStatus(r, a.labelKey === 'repair.upgradeNics' ? 'Sfp28' : 'SfpPlus', a.labelKey === 'repair.upgradeNics' ? 25 : 10) : t('repair.current', 0);
+      if (a.nicStatus) {
+        selectedNicAction = a.labelKey;
+        for (const other of list.querySelectorAll('button')) {
+          if (other !== btn && other.dataset.nicAction === 'true') {
+            other.disabled = false;
+            other.classList.remove('done');
+            other.innerHTML = t(other.dataset.labelKey);
+            other.nextElementSibling.textContent = t('repair.hostNicStatus', 0, (r.get('pool')?.get('hosts') || []).length);
+          }
+        }
+      }
+    });
+    if (a.nicStatus) { btn.dataset.nicAction = 'true'; btn.dataset.labelKey = a.labelKey; }
     row.appendChild(btn); row.appendChild(stat);
     list.appendChild(row);
   }
@@ -1237,7 +1503,7 @@ function deviceNameLookup() {
   return map;
 }
 
-function fmtGbps(v) { const n = num(v); return (n < 0.001 ? '0.00' : n.toFixed(2)) + ' Gbps'; }
+function fmtGbps(v) { const n = Number(num(v) ?? 0); return (n < 0.001 ? '0.00' : n.toFixed(2)) + ' Gbps'; }
 function fmtBytes(n) {
   n = Number(n);
   const units = ['B','KB','MB','GB','TB'];
@@ -1699,10 +1965,15 @@ document.getElementById('loadModalMetaFile').addEventListener('change', e => {
 const drop = document.getElementById('drop');
 const fileInput = document.getElementById('file');
 fileInput.addEventListener('change', () => {
-  if (!fileInput.files[0]) return;
+  const files = [...fileInput.files];
+  const save = files.find(f => /\.save$/i.test(f.name));
+  if (!save) return;
   metaState = null;
-  metaCheckDone = true; // click-to-browse can't see sibling files — no attempt made
-  loadFile(fileInput.files[0]);
+  metaCheckDone = true;
+  const meta = files.find(f =>
+    f.name.toLowerCase() === save.name.replace(/\.save$/i, '.meta.json').toLowerCase());
+  loadFile(save);
+  if (meta) loadMetaFile(meta, true);
 });
 drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('hover'); });
 drop.addEventListener('dragleave', () => drop.classList.remove('hover'));
@@ -1712,10 +1983,14 @@ drop.addEventListener('drop', e => {
   let entry = null;
   const items = e.dataTransfer.items;
   if (items && items.length && items[0].webkitGetAsEntry) entry = items[0].webkitGetAsEntry();
-  const f = e.dataTransfer.files[0];
+  const files = [...e.dataTransfer.files];
+  const f = files.find(file => /\.save$/i.test(file.name));
   if (!f) return;
   loadFile(f);
-  tryAutoLoadMeta(entry);
+  const meta = files.find(file =>
+    file.name.toLowerCase() === f.name.replace(/\.save$/i, '.meta.json').toLowerCase());
+  if (meta) loadMetaFile(meta, true);
+  else tryAutoLoadMeta(entry);
 });
 </script>
 </body>
