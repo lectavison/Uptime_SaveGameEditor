@@ -232,7 +232,7 @@ tr:hover td{background:#242422}
     <button data-tab="customers" data-i18n="nav.customers">Customers</button>
     <button data-tab="player" data-i18n="nav.player">Player</button>
     <button data-tab="repair" data-i18n="nav.repair">Repair</button>
-    <button data-tab="tuning" data-i18n="nav.tuning">Tuning</button>
+    <button id="tuningNav" data-tab="tuning" data-i18n="nav.tuning">Tuning</button>
     <button data-tab="stats" data-i18n="nav.stats">Statistics</button>
   </nav>
   <div class="spacer"></div>
@@ -846,7 +846,7 @@ function renderAll(file) {
   document.getElementById('fsize').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
   document.getElementById('fmeta').textContent = t('fileinfo.summary',
     r.get('scenario_id') || '?', r.get('current_site') || '?', state.devices.length, state.customers.length);
-  document.getElementById('nav').style.display = 'flex';
+  document.getElementById('nav').style.display = 'flex'; const tuningAvailable = r.get('scenario_id') === 'sandbox'; const tuningNav = document.getElementById('tuningNav'); tuningNav.style.display = tuningAvailable ? '' : 'none'; document.getElementById('tab-tuning').style.display = tuningAvailable ? '' : 'none'; if (!tuningAvailable && tuningNav.classList.contains('active')) { document.querySelector('button[data-tab="devices"]').click(); }
   document.getElementById('downloadBtn').classList.add('show');
   updateLoadStatusBar();
   openLoadMetaModal();
