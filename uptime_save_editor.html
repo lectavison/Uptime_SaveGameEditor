@@ -6,24 +6,11 @@
 <title>Uptime Save Tools</title>
 <style>
 
-:root[data-theme="light"] {
-  --bg:#f4f5f7; --sidebar:#ffffff; --panel:#ffffff; --panel2:#f7f8fa; --line:#e4e7ec;
-  --text:#1a1f29; --dim:#8a93a3; --accent:#5b5ff0; --accent2:#00b894;
-  --amber:#d68300; --cyan:#0891d1; --green:#0f9960; --violet:#7c5cd6; --red:#d6413a;
-  --shadow:0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.06);
-}
-:root[data-theme="dark"] {
-  --bg:#0e1116; --sidebar:#12161d; --panel:#161b23; --panel2:#0f1319; --line:#252b35;
-  --text:#e4e8ee; --dim:#6b7585; --accent:#7d7fff; --accent2:#2dd4a7;
-  --amber:#ffb454; --cyan:#4dc3ff; --green:#4cd97b; --violet:#b58cff; --red:#ff6b6b;
-  --shadow:0 1px 2px rgba(0,0,0,.3), 0 4px 12px rgba(0,0,0,.25);
-}
 :root{color-scheme:light dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);
   font-family:-apple-system,"Segoe UI",Inter,ui-sans-serif,system-ui,sans-serif;font-size:13px;line-height:1.5;
   display:flex;min-height:100vh}
-.mono{font-family:"JetBrains Mono","Cascadia Code",ui-monospace,Consolas,monospace}
 
 /* ---- Sidebar shell ---- */
 aside{width:216px;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--line);
@@ -242,12 +229,6 @@ nav button::before{width:7px;height:7px;border-radius:1px;background:#66625d}
 nav button:hover{background:#242322;color:#eee9df}
 nav button.active{background:#3b3027;color:#fff1df;border-left:3px solid var(--accent);padding-left:7px}
 nav button.active::before{background:var(--accent)}
-.tool-switch{display:grid;gap:3px;margin:0 0 18px}
-.tool-switch .tool-label{padding:0 10px 5px;color:#66625d;font-size:10px;letter-spacing:.1em;text-transform:uppercase}
-.tool-switch a{display:flex;align-items:center;min-height:34px;border-left:3px solid transparent;padding:0 10px;
-  color:#aaa69e;text-decoration:none;font-size:12px;font-weight:600}
-.tool-switch a:hover{background:#242322;color:#eee9df}
-.tool-switch a.active{background:#3b3027;color:#fff1df;border-left-color:var(--accent)}
 #themeToggle,#langToggle{background:#1b1c1c;border-color:#303130;border-radius:4px;color:#bcb8b0;font-size:11px;padding:7px 10px}
 .topbar{background:var(--bg);border-bottom:1px solid var(--line);padding:14px 28px}
 main{max-width:1400px;padding:16px 28px 100px}
@@ -319,8 +300,8 @@ tr:hover td{background:#242422}
   <div class="topbar centered" id="topbar">
     <label class="drop big" id="drop">
       <span data-i18n="drop.title">Open savegame</span>
-      <span class="sub" data-i18n="drop.sub">Drop your .save file here or click to browse</span>
-      <input type="file" id="file" accept=".save,.json" multiple>
+      <span class="sub" data-i18n="drop.sub">Select or drop the .save and matching meta.json together</span>
+      <input type="file" id="file" accept=".save,.bak,.json" multiple>
     </label>
     <div class="fileinfo" id="fileinfo">
       <span class="fname" id="fname"></span>
@@ -343,7 +324,7 @@ tr:hover td{background:#242422}
       <section class="converter-rail" aria-label="Converter file operations">
         <label class="drop" id="converterDrop" for="converterFile">
           <div><strong>Drop a save or JSON file</strong><span>or click to browse</span></div>
-          <input id="converterFile" type="file" accept=".save,.bak,.json,application/json,application/octet-stream">
+          <input id="converterFile" type="file" accept=".save,.bak,.json">
         </label>
         <div class="converter-file"><div class="converter-file-name" id="converterFileName">No file loaded</div><div class="converter-file-meta" id="converterFileMeta">Waiting for input</div></div>
         <div class="converter-actions">
@@ -478,11 +459,15 @@ tr:hover td{background:#242422}
 <div class="modal-overlay" id="loadMetaModalOverlay">
   <div class="modal">
     <h3 data-i18n="loadMeta.title">Load meta.json</h3>
-    <p class="desc" data-i18n="loadMeta.desc">The matching <code>meta.json</code> is needed to set the in-game save name (load screen). When using drag &amp; drop, the editor automatically looks for a same-named file in the same folder.</p>
+    <p class="desc" data-i18n="loadMeta.desc">The matching <code>meta.json</code> is needed to set the in-game save name. Select or drop both files together, or choose the containing folder below.</p>
     <div id="loadModalMetaState"></div>
     <label class="metaLoadBtn">
       <span data-i18n="loadMeta.manual">📄 Load meta.json manually</span>
-      <input type="file" id="loadModalMetaFile" accept=".json" style="display:none">
+      <input type="file" id="loadModalMetaFile" accept=".save,.bak,.json" style="display:none">
+    </label>
+    <label class="metaLoadBtn" style="margin-top:10px">
+      <span data-i18n="loadMeta.folder">📁 Search containing folder</span>
+      <input type="file" id="loadModalMetaFolder" accept=".save,.bak,.json" webkitdirectory directory multiple style="display:none">
     </label>
     <div class="actions">
       <button class="primary" id="loadModalContinueBtn" data-i18n="loadMeta.continue">Continue</button>
@@ -498,7 +483,7 @@ tr:hover td{background:#242422}
     <div id="modalMetaState"></div>
     <label class="metaLoadBtn" style="margin-bottom:16px">
       <span data-i18n="loadMeta.manual">📄 Load meta.json manually</span>
-      <input type="file" id="modalMetaFile" accept=".json" style="display:none">
+      <input type="file" id="modalMetaFile" accept=".save,.bak,.json" style="display:none">
     </label>
     <div class="field">
       <label data-i18n="nameModal.label">Save name</label>
@@ -513,120 +498,16 @@ tr:hover td{background:#242422}
 
 
 <script>
-// ============ MessagePack Codec ============
+// ============ Editor Value Types ============
 class F { constructor(v){ this.v = v; } }
-
-function mpDecode(buf, pos) {
-  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
-  const td = new TextDecoder();
-  function rd(p) {
-    const b = buf[p]; p++;
-    if (b <= 0x7f) return [b, p];
-    if (b >= 0xe0) return [b - 0x100, p];
-    if (b >= 0x80 && b <= 0x8f) return rmap(p, b & 15);
-    if (b >= 0x90 && b <= 0x9f) return rarr(p, b & 15);
-    if (b >= 0xa0 && b <= 0xbf) { const n = b & 31; return [td.decode(buf.subarray(p, p+n)), p+n]; }
-    switch (b) {
-      case 0xc0: return [null, p];
-      case 0xc2: return [false, p];
-      case 0xc3: return [true, p];
-      case 0xc4: { const n = buf[p]; p++; return [buf.slice(p, p+n), p+n]; }
-      case 0xc5: { const n = dv.getUint16(p); p += 2; return [buf.slice(p, p+n), p+n]; }
-      case 0xc6: { const n = dv.getUint32(p); p += 4; return [buf.slice(p, p+n), p+n]; }
-      case 0xca: return [new F(dv.getFloat32(p)), p+4];
-      case 0xcb: return [new F(dv.getFloat64(p)), p+8];
-      case 0xcc: return [buf[p], p+1];
-      case 0xcd: return [dv.getUint16(p), p+2];
-      case 0xce: return [dv.getUint32(p), p+4];
-      case 0xcf: return [dv.getBigUint64(p), p+8];
-      case 0xd0: return [dv.getInt8(p), p+1];
-      case 0xd1: return [dv.getInt16(p), p+2];
-      case 0xd2: return [dv.getInt32(p), p+4];
-      case 0xd3: return [dv.getBigInt64(p), p+8];
-      case 0xd9: { const n = buf[p]; p++; return [td.decode(buf.subarray(p, p+n)), p+n]; }
-      case 0xda: { const n = dv.getUint16(p); p += 2; return [td.decode(buf.subarray(p, p+n)), p+n]; }
-      case 0xdb: { const n = dv.getUint32(p); p += 4; return [td.decode(buf.subarray(p, p+n)), p+n]; }
-      case 0xdc: { const n = dv.getUint16(p); return rarr(p+2, n); }
-      case 0xdd: { const n = dv.getUint32(p); return rarr(p+4, n); }
-      case 0xde: { const n = dv.getUint16(p); return rmap(p+2, n); }
-      case 0xdf: { const n = dv.getUint32(p); return rmap(p+4, n); }
-    }
-    throw new Error('Unknown marker 0x' + b.toString(16) + ' @' + (p-1));
-  }
-  function rarr(p, n) { const a = []; for (let i = 0; i < n; i++) { const [v, q] = rd(p); a.push(v); p = q; } return [a, p]; }
-  function rmap(p, n) { const m = new Map(); for (let i = 0; i < n; i++) { let k, v, q; [k, q] = rd(p); [v, p] = rd(q); m.set(k, v); } return [m, p]; }
-  return rd(pos);
-}
-
-function mpEncode(o) {
-  const chunks = []; let total = 0;
-  const te = new TextEncoder();
-  function push(u8) { chunks.push(u8); total += u8.length; }
-  function b(...xs) { push(Uint8Array.from(xs)); }
-  function u16(m, n) { const u = new Uint8Array(3); u[0] = m; new DataView(u.buffer).setUint16(1, n); push(u); }
-  function u32(m, n) { const u = new Uint8Array(5); u[0] = m; new DataView(u.buffer).setUint32(1, n); push(u); }
-  function enc(o) {
-    if (o === null || o === undefined) return b(0xc0);
-    if (o === true) return b(0xc3);
-    if (o === false) return b(0xc2);
-    if (o instanceof F) { const u = new Uint8Array(9); u[0] = 0xcb; new DataView(u.buffer).setFloat64(1, o.v); return push(u); }
-    if (typeof o === 'bigint') {
-      const u = new Uint8Array(9);
-      if (o >= 0n) { u[0] = 0xcf; new DataView(u.buffer).setBigUint64(1, o); }
-      else { u[0] = 0xd3; new DataView(u.buffer).setBigInt64(1, o); }
-      return push(u);
-    }
-    if (typeof o === 'number') {
-      if (!Number.isInteger(o)) { const u = new Uint8Array(9); u[0] = 0xcb; new DataView(u.buffer).setFloat64(1, o); return push(u); }
-      if (o >= 0) {
-        if (o <= 0x7f) return b(o);
-        if (o <= 0xff) return b(0xcc, o);
-        if (o <= 0xffff) return u16(0xcd, o);
-        if (o <= 0xffffffff) return u32(0xce, o);
-        return enc(BigInt(o));
-      }
-      if (o >= -32) return b(o & 0xff);
-      if (o >= -128) return b(0xd0, o & 0xff);
-      if (o >= -32768) { const u = new Uint8Array(3); u[0] = 0xd1; new DataView(u.buffer).setInt16(1, o); return push(u); }
-      if (o >= -2147483648) { const u = new Uint8Array(5); u[0] = 0xd2; new DataView(u.buffer).setInt32(1, o); return push(u); }
-      return enc(BigInt(o));
-    }
-    if (typeof o === 'string') {
-      const e = te.encode(o); const n = e.length;
-      if (n <= 31) b(0xa0 | n); else if (n <= 0xff) b(0xd9, n); else if (n <= 0xffff) u16(0xda, n); else u32(0xdb, n);
-      return push(e);
-    }
-    if (o instanceof Uint8Array) {
-      const n = o.length;
-      if (n <= 0xff) b(0xc4, n); else if (n <= 0xffff) u16(0xc5, n); else u32(0xc6, n);
-      return push(o);
-    }
-    if (Array.isArray(o)) {
-      const n = o.length;
-      if (n <= 15) b(0x90 | n); else if (n <= 0xffff) u16(0xdc, n); else u32(0xdd, n);
-      for (const x of o) enc(x);
-      return;
-    }
-    if (o instanceof Map) {
-      const n = o.size;
-      if (n <= 15) b(0x80 | n); else if (n <= 0xffff) u16(0xde, n); else u32(0xdf, n);
-      for (const [k, v] of o) { enc(k); enc(v); }
-      return;
-    }
-    throw new Error('Not encodable: ' + typeof o);
-  }
-  enc(o);
-  const out = new Uint8Array(total); let off = 0;
-  for (const c of chunks) { out.set(c, off); off += c.length; }
-  return out;
-}
 
 // ============ i18n ============
 const I18N = {
   en: {
     'loadMeta.title': 'Load meta.json',
-    'loadMeta.desc': 'The matching <code>meta.json</code> is needed to set the in-game save name (load screen). When using drag &amp; drop, the editor automatically looks for a same-named file in the same folder.',
+    'loadMeta.desc': 'The matching <code>meta.json</code> is needed to set the in-game save name. Select or drop both files together, or choose the containing folder below.',
     'loadMeta.manual': '📄 Load meta.json manually',
+    'loadMeta.folder': '📁 Search containing folder',
     'loadMeta.continue': 'Continue',
     'nameModal.title': 'What should this savegame be called in-game?',
     'nameModal.desc': 'The name is stored in the <code>meta.json</code> (field <code>note</code>) — the game shows it as the save title on the load screen.',
@@ -654,7 +535,7 @@ const I18N = {
     'nav.customers': 'Customers', 'nav.player': 'Player', 'nav.repair': 'Repair',
     'nav.tuning': 'Tuning', 'nav.stats': 'Statistics',
     'drop.title': 'Open savegame',
-    'drop.sub': 'Drop your .save file here or click to browse',
+    'drop.sub': 'Select or drop the .save and matching meta.json together',
     'reloadBtn': 'Load another file',
     'fileinfo.summary': 'Scenario {0} · Site {1} · {2} devices/objects · {3} customers',
 
@@ -738,8 +619,9 @@ const I18N = {
   },
   de: {
     'loadMeta.title': 'meta.json laden',
-    'loadMeta.desc': 'Damit der Save-Name im Spiel (Lade-Bildschirm) gesetzt werden kann, wird die zugehörige <code>meta.json</code> benötigt. Bei Drag&amp;Drop wird automatisch nach der gleichnamigen Datei im selben Ordner gesucht.',
+    'loadMeta.desc': 'Für den Save-Namen wird die passende <code>meta.json</code> benötigt. Beide Dateien gemeinsam auswählen/ablegen oder unten den enthaltenen Ordner auswählen.',
     'loadMeta.manual': '📄 meta.json manuell laden',
+    'loadMeta.folder': '📁 Enthaltenden Ordner durchsuchen',
     'loadMeta.continue': 'Weiter',
     'nameModal.title': 'Wie soll das Savegame im Spiel heißen?',
     'nameModal.desc': 'Der Name wird in der <code>meta.json</code> (Feld <code>note</code>) gespeichert — das Spiel zeigt ihn im Lade-Bildschirm als Save-Titel an.',
@@ -767,7 +649,7 @@ const I18N = {
     'nav.customers': 'Kunden', 'nav.player': 'Spieler', 'nav.repair': 'Reparatur',
     'nav.tuning': 'Tuning', 'nav.stats': 'Statistik',
     'drop.title': 'Savegame öffnen',
-    'drop.sub': '.save-Datei hier ablegen oder klicken zum Durchsuchen',
+    'drop.sub': '.save und passende meta.json gemeinsam auswählen oder ablegen',
     'reloadBtn': 'Andere Datei laden',
     'fileinfo.summary': 'Szenario {0} · Standort {1} · {2} Geräte/Objekte · {3} Kunden',
 
@@ -952,40 +834,13 @@ function collectCustomers(root) {
 }
 
 // ============ Loading & rendering ============
-function converterJsonToEditorValue(value) {
-  if (Array.isArray(value)) return value.map(converterJsonToEditorValue);
-  if (typeof value === 'number') return Number.isInteger(value) ? value : new F(value);
-  if (!value || typeof value !== 'object') return value;
-
-  const keys = Object.keys(value);
-  if (keys.length === 1 && keys[0] === '$msgpackInt') return BigInt(value.$msgpackInt);
-  if (keys.length === 1 && keys[0] === '$msgpackFloat') return new F(Number(value.$msgpackFloat));
-  if (keys.length === 1 && keys[0] === '$msgpackBinary') {
-    const binary = atob(value.$msgpackBinary);
-    return Uint8Array.from(binary, character => character.charCodeAt(0));
-  }
-  if (keys.length === 1 && keys[0] === '$msgpackMap') {
-    return new Map(value.$msgpackMap.map(([key, item]) => [
-      converterJsonToEditorValue(key),
-      converterJsonToEditorValue(item)
-    ]));
-  }
-  if (keys.length === 1 && keys[0] === '$msgpackExt') {
-    throw new Error('This save contains a MessagePack extension value that the visual editor cannot modify safely.');
-  }
-  return new Map(Object.entries(value).map(([key, item]) => [key, converterJsonToEditorValue(item)]));
-}
-
 function loadFile(file, activateView = true, showMetaPrompt = true) {
   const reader = new FileReader();
   reader.onload = () => {
     try {
       const buf = new Uint8Array(reader.result);
       if (!window.saveConverter) throw new Error('The shared save decoder is not available.');
-      const decoded = window.saveConverter.decodeSave(buf);
-      const payload = { ...decoded };
-      delete payload.$csimVersion;
-      const root = converterJsonToEditorValue(payload);
+      const root = window.saveConverter.decodeEditorSave(buf);
       state = { header: buf.slice(0, 5), root, filename: file.name, fileSize: file.size,
                 devices: collectDevices(root), customers: collectCustomers(root), changedCables: new Set() };
       renderAll(file, activateView, showMetaPrompt);
@@ -2410,7 +2265,7 @@ function commitEditorChanges() {
 function syncEditorToJson() {
   const r = commitEditorChanges();
   if (!r || !window.saveConverter) return;
-  const body = mpEncode(r);
+  const body = window.saveConverter.encodeEditorPayload(r);
   const out = new Uint8Array(5 + body.length);
   out.set(state.header);
   out.set(body, 5);
@@ -2423,7 +2278,7 @@ function performDownload() {
   try {
     const r = commitEditorChanges();
     // Encode
-    const body = mpEncode(r);
+    const body = window.saveConverter.encodeEditorPayload(r);
     const out = new Uint8Array(5 + body.length);
     out.set(state.header); out.set(body, 5);
     const blob = new Blob([out], { type: 'application/octet-stream' });
@@ -2437,7 +2292,7 @@ function performDownload() {
     // only downloaded if a matching meta.json was found/loaded (see below).
     if (metaState) {
       const metaBlob = new Blob([JSON.stringify(metaState.raw, null, 2)], { type: 'application/json' });
-      const metaName = metaState.filename || (state.filename.replace(/\.save$/i, '') + '.meta.json');
+      const metaName = metaState.filename || metaFilenameForSave(state.filename);
       const ma = document.createElement('a');
       ma.href = URL.createObjectURL(metaBlob);
       ma.download = metaName;
@@ -2450,6 +2305,11 @@ function performDownload() {
 // ---- Save-Name Popup + meta.json (in-game title = meta.note, siehe load_panel.gd::_save_title) ----
 let metaState = null;       // { raw, filename, auto }
 let metaCheckDone = false;  // true once the auto-detect attempt (success or fail) has settled
+const SAVE_FILE_PATTERN = /\.(save|bak)$/i;
+
+function metaFilenameForSave(filename) {
+  return filename.replace(/(?:\.v\d+)?\.(?:save|bak)$/i, '') + '.meta.json';
+}
 
 function loadMetaFile(file, auto) {
   const reader = new FileReader();
@@ -2468,24 +2328,18 @@ function loadMetaFile(file, auto) {
   reader.readAsText(file);
 }
 
-// Drag&Drop only: tries to find a sibling "<savename>.meta.json" next to the
-// dropped .save via the (non-standard but widely supported) Entry API. Silently
-// gives up if the browser/context doesn't support it — manual load in the popup
-// still works either way. Not possible for the click-to-browse file input, which
-// only ever exposes the single chosen File, no folder access.
-function tryAutoLoadMeta(saveEntry) {
-  metaCheckDone = false;
-  updateLoadStatusBar(); updateLoadModalMetaUI();
-  const giveUp = () => { metaCheckDone = true; updateLoadStatusBar(); updateLoadModalMetaUI(); };
-  if (!saveEntry || !saveEntry.isFile || typeof saveEntry.getParent !== 'function') { giveUp(); return; }
-  try {
-    saveEntry.getParent(dirEntry => {
-      const metaName = saveEntry.name.replace(/\.save$/i, '') + '.meta.json';
-      dirEntry.getFile(metaName, {}, metaEntry => {
-        metaEntry.file(f => loadMetaFile(f, true));
-      }, giveUp);
-    }, giveUp);
-  } catch (e) { giveUp(); }
+function findMatchingMeta(files) {
+  if (!state) return null;
+  const target = metaFilenameForSave(state.filename).toLowerCase();
+  return [...files].find(file => file.name.toLowerCase() === target) || null;
+}
+
+function loadFromMetaPicker(file) {
+  if (SAVE_FILE_PATTERN.test(file.name)) {
+    metaState = null;
+    metaCheckDone = true;
+    loadFile(file);
+  } else loadMetaFile(file, false);
 }
 
 function updateLoadStatusBar() {
@@ -2566,50 +2420,51 @@ document.getElementById('modalConfirmBtn').addEventListener('click', () => {
   performDownload();
   closeNameModal();
 });
-document.getElementById('modalMetaFile').addEventListener('change', e => {
-  const f = e.target.files[0];
-  if (f) loadMetaFile(f, false);
-});
+for (const id of ['modalMetaFile', 'loadModalMetaFile']) {
+  document.getElementById(id).addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (file) loadFromMetaPicker(file);
+  });
+}
 
 document.getElementById('loadModalContinueBtn').addEventListener('click', closeLoadMetaModal);
 document.getElementById('loadMetaModalOverlay').addEventListener('click', e => {
   if (e.target.id === 'loadMetaModalOverlay') closeLoadMetaModal();
 });
-document.getElementById('loadModalMetaFile').addEventListener('change', e => {
-  const f = e.target.files[0];
-  if (f) loadMetaFile(f, false);
+document.getElementById('loadModalMetaFolder').addEventListener('change', e => {
+  metaCheckDone = false;
+  updateLoadStatusBar(); updateLoadModalMetaUI();
+  const meta = findMatchingMeta(e.target.files);
+  if (meta) loadMetaFile(meta, true);
+  else {
+    metaCheckDone = true;
+    updateLoadStatusBar(); updateLoadModalMetaUI();
+  }
 });
 
 // File input + Drag&Drop
 const drop = document.getElementById('drop');
 const fileInput = document.getElementById('file');
-fileInput.addEventListener('change', () => {
-  const files = [...fileInput.files];
-  const save = files.find(f => /\.save$/i.test(f.name));
+
+function loadSelectedSaveFiles(fileList) {
+  const files = [...fileList];
+  const save = files.find(file => SAVE_FILE_PATTERN.test(file.name));
   if (!save) return;
   metaState = null;
   metaCheckDone = true;
-  const meta = files.find(f =>
-    f.name.toLowerCase() === save.name.replace(/\.save$/i, '.meta.json').toLowerCase());
+  const targetMetaName = metaFilenameForSave(save.name).toLowerCase();
+  const meta = files.find(file => file.name.toLowerCase() === targetMetaName);
   loadFile(save);
   if (meta) loadMetaFile(meta, true);
-});
+  else { updateLoadStatusBar(); updateLoadModalMetaUI(); }
+}
+
+fileInput.addEventListener('change', () => loadSelectedSaveFiles(fileInput.files));
 drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('hover'); });
 drop.addEventListener('dragleave', () => drop.classList.remove('hover'));
 drop.addEventListener('drop', e => {
   e.preventDefault(); drop.classList.remove('hover');
-  metaState = null;
-  let entry = null;
-  const items = e.dataTransfer.items;
-  if (items && items.length && items[0].webkitGetAsEntry) entry = items[0].webkitGetAsEntry();
-  const files = [...e.dataTransfer.files];
-  const f = files.find(file => /\.save$/i.test(file.name));
-  if (!f) return;
-  loadFile(f);
-  const meta = files.find(file =>
-    file.name.toLowerCase() === f.name.replace(/\.save$/i, '.meta.json').toLowerCase());
-  if (meta) loadMetaFile(meta, true);
-  else tryAutoLoadMeta(entry);
+  loadSelectedSaveFiles(e.dataTransfer.files);
 });
 </script>
 
@@ -2622,10 +2477,11 @@ const MAGIC = new Uint8Array([0x43, 0x53, 0x49, 0x4d]);
     const utf8Encoder = new TextEncoder();
 
     class MsgPackReader {
-      constructor(bytes) {
+      constructor(bytes, editorMode = false) {
         this.bytes = bytes;
         this.view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
         this.offset = 0;
+        this.editorMode = editorMode;
       }
 
       ensure(length) {
@@ -2638,8 +2494,8 @@ const MAGIC = new Uint8Array([0x43, 0x53, 0x49, 0x4d]);
       int8() { this.ensure(1); const value = this.view.getInt8(this.offset); this.offset++; return value; }
       int16() { this.ensure(2); const value = this.view.getInt16(this.offset); this.offset += 2; return value; }
       int32() { this.ensure(4); const value = this.view.getInt32(this.offset); this.offset += 4; return value; }
-      uint64() { this.ensure(8); const value = this.view.getBigUint64(this.offset); this.offset += 8; return this.safeInteger(value); }
-      int64() { this.ensure(8); const value = this.view.getBigInt64(this.offset); this.offset += 8; return this.safeInteger(value); }
+      uint64() { this.ensure(8); const value = this.view.getBigUint64(this.offset); this.offset += 8; return this.editorMode ? value : this.safeInteger(value); }
+      int64() { this.ensure(8); const value = this.view.getBigInt64(this.offset); this.offset += 8; return this.editorMode ? value : this.safeInteger(value); }
       safeInteger(value) {
         return value <= BigInt(Number.MAX_SAFE_INTEGER) && value >= BigInt(Number.MIN_SAFE_INTEGER)
           ? Number(value)
@@ -2656,11 +2512,17 @@ const MAGIC = new Uint8Array([0x43, 0x53, 0x49, 0x4d]);
       map(length) {
         const entries = [];
         for (let index = 0; index < length; index++) entries.push([this.read(), this.read()]);
-        return { $rawMap: entries };
+        return this.editorMode ? new Map(entries) : { $rawMap: entries };
       }
       ext(length) {
         const type = this.int8();
         return { $rawExt: { type, data: this.bytesOf(length) } };
+      }
+      float(method, byteLength) {
+        this.ensure(byteLength);
+        const value = this.view[method](this.offset);
+        this.offset += byteLength;
+        return this.editorMode ? new F(value) : value;
       }
 
       read() {
@@ -2681,8 +2543,8 @@ const MAGIC = new Uint8Array([0x43, 0x53, 0x49, 0x4d]);
           case 0xc7: return this.ext(this.byte());
           case 0xc8: return this.ext(this.uint16());
           case 0xc9: return this.ext(this.uint32());
-          case 0xca: this.ensure(4); { const value = this.view.getFloat32(this.offset); this.offset += 4; return value; }
-          case 0xcb: this.ensure(8); { const value = this.view.getFloat64(this.offset); this.offset += 8; return value; }
+          case 0xca: return this.float("getFloat32", 4);
+          case 0xcb: return this.float("getFloat64", 8);
           case 0xcc: return this.byte();
           case 0xcd: return this.uint16();
           case 0xce: return this.uint32();
@@ -2769,11 +2631,13 @@ const MAGIC = new Uint8Array([0x43, 0x53, 0x49, 0x4d]);
         if (value === null) return this.one(0xc0);
         if (value === false) return this.one(0xc2);
         if (value === true) return this.one(0xc3);
+        if (value instanceof F) return this.numeric(0xcb, "setFloat64", 8, value.v);
         if (typeof value === "string") return this.string(value);
         if (typeof value === "bigint" || (typeof value === "number" && Number.isInteger(value))) return this.integer(value);
         if (typeof value === "number") return this.numeric(0xcb, "setFloat64", 8, value);
         if (value instanceof Uint8Array) return this.binary(value);
         if (Array.isArray(value)) return this.array(value);
+        if (value instanceof Map) return this.map([...value.entries()]);
         if (value && value.$rawExt) return this.ext(value.$rawExt.type, value.$rawExt.data);
         if (value && value.$rawMap) return this.map(value.$rawMap);
         throw new Error("JSON contains a value that cannot be encoded as MessagePack");
@@ -2852,6 +2716,15 @@ const MAGIC = new Uint8Array([0x43, 0x53, 0x49, 0x4d]);
       return { $csimVersion: Number(version), ...json };
     }
 
+    function decodeEditorSave(bytes) {
+      getSaveVersion(bytes);
+      const reader = new MsgPackReader(bytes.subarray(5), true);
+      const root = reader.read();
+      if (reader.offset !== reader.bytes.length) throw new Error(`Save has ${reader.bytes.length - reader.offset} trailing bytes`);
+      if (!(root instanceof Map)) throw new Error("The CSIM payload root is not a MessagePack map");
+      return root;
+    }
+
     function saveVersionByte(version) {
       if (version === "legacy") return 32;
       const numericVersion = Number(version);
@@ -2875,6 +2748,12 @@ const MAGIC = new Uint8Array([0x43, 0x53, 0x49, 0x4d]);
       output[4] = headerVersion;
       output.set(payload, 5);
       return output;
+    }
+
+    function encodeEditorPayload(root) {
+      const writer = new MsgPackWriter();
+      writer.write(root);
+      return writer.finish();
     }
 
     function buildMetadata(json, version, slot) {
@@ -3156,7 +3035,16 @@ const MAGIC = new Uint8Array([0x43, 0x53, 0x49, 0x4d]);
       } catch (error) { setStatus(`Could not build save: ${error.message}`, "error"); }
     });
 
-    window.saveConverter = { decodeSave, encodeSave, getSaveVersion, buildMetadata, loadFile, syncEditorFromJson };
+    window.saveConverter = {
+      decodeSave,
+      decodeEditorSave,
+      encodeSave,
+      encodeEditorPayload,
+      getSaveVersion,
+      buildMetadata,
+      loadFile,
+      syncEditorFromJson
+    };
 })();
 </script>
 </body>
