@@ -100,7 +100,30 @@ tr:hover td{background:var(--panel2)}
 td.id,td.az{color:var(--dim);width:56px}
 td input[type=text]{width:100%} td input[type=number]{width:90px}
 td.sel{width:30px} td .arch{color:var(--dim);font-size:11px}
-tr.changed input{border-color:var(--amber)}
+td.rack,td.uheight,th:nth-child(4),th:nth-child(5){white-space:nowrap}
+.roval{display:block;padding:7px 11px;color:var(--text)}
+td.nic{white-space:normal;font-size:11px;line-height:1.25}
+.nic-main{color:var(--text)} .nic-cap{color:var(--dim)} .nic-link{color:var(--dim)}
+.nic-state-up{color:var(--green);font-weight:600}
+.nic-state-down{color:var(--red);font-weight:600}
+.nic-state-errored{color:var(--red);font-weight:600}
+.nic-state-unknown{color:var(--amber)}
+.nic-sub{color:var(--dim);font-size:10px;margin-top:2px}
+.nic-cable-item{display:inline-flex;align-items:center;gap:4px}
+.nic-color-stack{display:inline-flex;align-items:center;gap:2px}
+.nic-color-box{width:10px;height:10px;border-radius:2px;border:1px solid var(--line);display:inline-block}
+.nic-status-inline{display:inline-flex;align-items:center;gap:2px;white-space:nowrap}
+.cable-link{padding:0;border:0;background:transparent;color:var(--accent);font:inherit;cursor:pointer;text-decoration:underline}
+.cable-editor tr.highlighted td{outline:2px solid var(--accent);outline-offset:-2px;background:var(--panel2)}
+.cable-editor select{min-width:130px}
+.cable-editor td{vertical-align:middle}
+.cable-editor .speed{color:var(--dim);white-space:nowrap}
+.port-head{white-space:normal;line-height:1.15;text-align:center}
+.port-head-label,.port-head-number{display:block}
+.port-head-number{color:var(--text);font-size:11px;margin-top:2px}
+.port-pair-item{display:block;min-height:18px}
+.port-pair-item + .port-pair-item{border-top:1px solid var(--line);padding-top:2px;margin-top:2px}
+tr.changed input, tr.changed select{border-color:var(--amber)}
 .search{width:280px;margin-bottom:12px}
 .stat{color:var(--dim);font-size:12px;margin-left:8px}
 #downloadBtn{display:none;position:fixed;bottom:24px;right:28px;box-shadow:0 8px 24px rgba(91,95,240,.35);
@@ -298,6 +321,10 @@ tr:hover td{background:#242422}
       <div id="netTopErrors"></div>
     </div>
     <div class="panel">
+      <h3>CABLES</h3>
+      <div id="netCables"></div>
+    </div>
+    <div class="panel">
       <h3 data-i18n="network.vrfSubnets">VRFS &amp; SUBNETS</h3>
       <div id="netVrf"></div>
     </div>
@@ -312,6 +339,7 @@ tr:hover td{background:#242422}
       <span class="lbl">price_multiplier</span>
       <input type="number" id="custMultVal" step="0.1" value="1.0" style="width:80px">
       <button id="custMult" data-i18n="customers.setSelection">Set (selection)</button>
+      <button id="custVrfs" data-i18n="customers.oneVrfEach">One VRF per customer</button>
       <label class="chk"><input type="checkbox" id="custSelAll" checked> <span data-i18n="common.selectAll">select all</span></label>
     </div>
     <div id="custTable"></div>
@@ -580,6 +608,9 @@ const I18N = {
 
     'customers.health': 'health = 1.0 (selection)', 'customers.clearProbation': 'Clear probation (selection)',
     'customers.slaZero': 'SLA credits = 0 (selection)', 'customers.setSelection': 'Set (selection)',
+    'customers.oneVrfEach': 'One VRF per customer',
+    'alert.vrfApplied': 'Created or reused {0} customer VRF(s).',
+    'alert.vrfUnavailable': 'This save has no customer VRF assignment field.',
     'customers.th.id': 'ID', 'customers.th.name': 'Name', 'customers.th.archetype': 'Archetype',
     'customers.th.health': 'health', 'customers.th.priceMult': 'price_mult',
     'customers.th.probation': 'Probation', 'customers.th.sla': 'SLA Credits',
@@ -690,6 +721,9 @@ const I18N = {
 
     'customers.health': 'health = 1.0 (Auswahl)', 'customers.clearProbation': 'Bewährung aufheben (Auswahl)',
     'customers.slaZero': 'SLA-Gutschriften = 0 (Auswahl)', 'customers.setSelection': 'Setzen (Auswahl)',
+    'customers.oneVrfEach': 'Ein VRF pro Kunde',
+    'alert.vrfApplied': '{0} Kunden-VRF(s) erstellt oder wiederverwendet.',
+    'alert.vrfUnavailable': 'Dieses Save hat kein VRF-Zuweisungsfeld für Kunden.',
     'customers.th.id': 'ID', 'customers.th.name': 'Name', 'customers.th.archetype': 'Archetyp',
     'customers.th.health': 'health', 'customers.th.priceMult': 'price_mult',
     'customers.th.probation': 'Bewährung', 'customers.th.sla': 'SLA-Gutschriften',
@@ -790,10 +824,13 @@ function collectDevices(root) {
     return null;
   };
   const out = [];
-  const add = (type, dev) => {
+  const add = (type, dev, opts = {}) => {
     if (!(dev instanceof Map)) return;
-    const nameKey = dev.has('display_name') ? 'display_name' : (dev.has('name') ? 'name' : null);
-    if (nameKey) out.push({ type, dev, nameKey, az: azOf(dev) });
+    const nameKey = dev.has('display_name') ? 'display_name'
+      : (dev.has('name') ? 'name'
+      : (dev.has('display_name_plain') ? 'display_name_plain' : null));
+    const fallbackName = (type === 'edd' && dev.has('id')) ? ('PatchPanel #' + dev.get('id')) : '';
+    out.push({ type, dev, nameKey, fallbackName, az: azOf(dev), readonlyName: !!opts.readonlyName });
   };
   const pool = root.get('pool');
   if (pool instanceof Map) for (const h of (pool.get('hosts') || [])) add('host', h);
@@ -801,6 +838,7 @@ function collectDevices(root) {
   if (sw instanceof Map) for (const v of sw.values()) add('switch', v);
   for (const g of (root.get('gateways') || [])) add('gw', g);
   for (const e of (root.get('edds') || [])) add('edd', e);
+  for (const p of (root.get('patch_panels') || [])) add('edd', p, { readonlyName: true });
   for (const s of (root.get('security_appliances') || [])) add('fw', s);
   for (const r of (root.get('racks') || [])) add('rack', r);
   for (const a of (root.get('azs') || [])) add('az', a);
@@ -828,10 +866,11 @@ function loadFile(file) {
   reader.onload = () => {
     try {
       const buf = new Uint8Array(reader.result);
-      if (new TextDecoder().decode(buf.slice(0, 5)) !== 'CSIM3') throw new Error(t('alert.notUptimeSave'));
+      const magic = new TextDecoder().decode(buf.slice(0, 5));
+      if (!/^CSIM\d+$/.test(magic)) throw new Error(t('alert.notUptimeSave'));
       const [root] = mpDecode(buf, 5);
       state = { header: buf.slice(0, 5), root, filename: file.name,
-                devices: collectDevices(root), customers: collectCustomers(root) };
+                devices: collectDevices(root), customers: collectCustomers(root), changedCables: new Set() };
       renderAll(file);
     } catch (e) { alert(t('alert.errorLoading', e.message)); console.error(e); }
   };
@@ -846,7 +885,14 @@ function renderAll(file) {
   document.getElementById('fsize').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
   document.getElementById('fmeta').textContent = t('fileinfo.summary',
     r.get('scenario_id') || '?', r.get('current_site') || '?', state.devices.length, state.customers.length);
-  document.getElementById('nav').style.display = 'flex'; const tuningAvailable = r.get('scenario_id') === 'sandbox'; const tuningNav = document.getElementById('tuningNav'); tuningNav.style.display = tuningAvailable ? '' : 'none'; document.getElementById('tab-tuning').style.display = tuningAvailable ? '' : 'none'; if (!tuningAvailable && tuningNav.classList.contains('active')) { document.querySelector('button[data-tab="devices"]').click(); }
+  document.getElementById('nav').style.display = 'flex';
+  const tuningAvailable = r.get('scenario_id') === 'sandbox';
+  const tuningNav = document.getElementById('tuningNav');
+  tuningNav.style.display = tuningAvailable ? '' : 'none';
+  document.getElementById('tab-tuning').style.display = tuningAvailable ? '' : 'none';
+  if (!tuningAvailable && tuningNav.classList.contains('active')) {
+    document.querySelector('button[data-tab="devices"]').click();
+  }
   document.getElementById('downloadBtn').classList.add('show');
   updateLoadStatusBar();
   openLoadMetaModal();
@@ -899,8 +945,11 @@ function renderDevices() {
   document.getElementById('devToolbar').style.display = 'flex';
   const container = document.getElementById('devGroups');
   container.innerHTML = '';
+  const hostNics = collectHostNics(state.root);
+  const switchNics = collectSwitchNics(state.root);
   for (const g of GROUPS) {
-    const devs = state.devices.filter(d => d.type === g.key);
+    const devs = state.devices.filter(d => d.type === g.key)
+      .sort((a, b) => (a.dev.get('id') ?? 0) - (b.dev.get('id') ?? 0));
     if (!devs.length) continue;
     const div = document.createElement('div');
     div.className = 'group';
@@ -909,10 +958,39 @@ function renderDevices() {
       ' <span class="cnt">(' + devs.length + ')</span></h2>';
     const tbl = document.createElement('table');
     const showPlacement = !['rack', 'az', 'region'].includes(g.key);
+    const showHostNics = g.key === 'host' && hostNics.maxNics > 0;
+    const showSwitchNics = g.key === 'switch' && switchNics.maxNics > 0;
+    const dynamicPortCount = showHostNics ? hostNics.maxNics : (showSwitchNics ? switchNics.maxNics : 0);
+    const portPairCount = Math.ceil(dynamicPortCount / 2);
+    const identityPortSpan = portPairCount;
+    let portHeaderRow = '';
+    if (showHostNics || showSwitchNics) {
+      let portHeaders = '';
+      if (showHostNics) {
+        for (let i = 1; i <= dynamicPortCount; i++) {
+          portHeaders += '<th class="port-head"><span class="port-pair-item"><span class="port-head-label">NIC</span><span class="port-head-number">' + i + '</span></span></th>';
+        }
+      } else {
+        for (let i = 0; i < portPairCount; i++) {
+          const first = i * 2 + 1;
+          const second = first + 1;
+          const pairHeader = number => number <= dynamicPortCount
+            ? '<span class="port-pair-item"><span class="port-head-label">Port</span><span class="port-head-number">' + number + '</span></span>'
+            : '';
+          portHeaders += '<th class="port-head">' + pairHeader(first) + pairHeader(second) + '</th>';
+        }
+      }
+      const baseColumnCount = 1 + 2 + (showPlacement ? 2 : 0) + 2;
+      portHeaderRow = '<tr class="port-header-row"><th></th>' + portHeaders +
+        '<th colspan="' + Math.max(0, baseColumnCount - 1) + '"></th></tr>';
+    }
+    const identityFieldSpan = dynamicPortCount ? 2 : 1;
+    const nameHeader = '<th' + (dynamicPortCount ? ' colspan="2"' : '') + '>' + t('devices.th.name') + '</th>';
+    const plainHeader = '<th' + (dynamicPortCount ? ' colspan="2"' : '') + '>' + t('devices.th.plain') + '</th>';
     tbl.innerHTML = '<tr><th></th><th>' + t('devices.th.id') + '</th><th>' + t('devices.th.az') +
       '</th>' + (showPlacement ? '<th>' + t('devices.th.rack') + '</th><th>' + t('devices.th.uheight') + '</th>' : '') +
-      '<th>' + t('devices.th.name') + '</th>' +
-      '<th>' + t('devices.th.plain') + '</th></tr>';
+      nameHeader + plainHeader +
+      '</tr>' + portHeaderRow;
     const rackById = new Map((state.root.get('racks') || []).map(r => [r.get('id'), r]));
     for (const d of devs) {
       const tr = document.createElement('tr');
@@ -922,42 +1000,93 @@ function renderDevices() {
         : '–';
       const uSize = uSizeOf(d.dev) || 1;
       const uPlacement = placement ? 'U' + placement.startU + ' (' + uSize + 'U)' : '–';
+      const nicTexts = [];
+      if (showHostNics || showSwitchNics) {
+        const portData = showHostNics ? hostNics : switchNics;
+        const nics = (showHostNics ? portData.byHost : portData.bySwitch).get(d.dev.get('id')) || [];
+        for (let i = 0; i < portData.maxNics; i++) {
+          const nic = nics[i];
+          let nicText = '–';
+          if (nic) {
+            const nicPortNum = (typeof nic.index === 'number') ? (nic.index + 1) : '?';
+            const st = String(nic.state || 'Unknown');
+            const stKey = st.toLowerCase();
+            const stCls = stKey === 'up' ? 'nic-state-up'
+              : (stKey === 'down' ? 'nic-state-down'
+              : (stKey === 'errored' ? 'nic-state-errored' : 'nic-state-unknown'));
+            const arrow = stKey === 'up' ? '↑' : (stKey === 'down' ? '↓' : '•');
+            nicText = '<span class="nic-status-inline"><span class="nic-main">P' + nicPortNum + '</span> ' +
+              '<span class="' + stCls + '">' + arrow + '</span></span>';
+            if (nic.cableDetails && nic.cableDetails.length) {
+              const cableHtml = nic.cableDetails.map(cd => '<span class="nic-cable-item"><button type="button" class="cable-link" data-cable-id="' + cd.id + '">#' + cd.id + '</button></span>').join(', ');
+              nicText += '<div class="nic-sub">' + cableHtml + '</div>';
+            } else if (nic.cableLabels && nic.cableLabels.length) {
+              nicText += '<div class="nic-sub">Cable: ' + esc(nic.cableLabels.join(', ')) + '</div>';
+            }
+          }
+          nicTexts.push(nicText);
+        }
+      }
       tr.innerHTML =
         '<td class="sel"><input type="checkbox" class="rowsel" checked></td>' +
         '<td class="id">' + d.dev.get('id') + '</td>' +
         '<td class="az">' + (d.az ?? '–') + '</td>' +
         (showPlacement ? '<td class="rack" data-rack-id="' + (placement ? placement.rackId : '') + '">' + rackInfo + '</td>' +
           '<td class="uheight">' + uPlacement + '</td>' : '') +
-        '<td><input type="text" class="nm"></td>' +
-        '<td><input type="text" class="pl"></td>';
-      const nm = tr.querySelector('.nm'), pl = tr.querySelector('.pl');
-      nm.value = d.dev.get(d.nameKey);
+        '<td' + (dynamicPortCount ? ' colspan="' + identityFieldSpan + '"' : '') + '>' +
+          (d.readonlyName ? '<span class="roval nmro"></span>' : '<input type="text" class="nm">') + '</td>' +
+        '<td' + (dynamicPortCount ? ' colspan="' + identityFieldSpan + '"' : '') + '><input type="text" class="pl"></td>';
+      const nm = tr.querySelector('.nm'), nmro = tr.querySelector('.nmro'), pl = tr.querySelector('.pl');
+      const nameVal = d.nameKey ? (d.dev.get(d.nameKey) ?? '') : (d.fallbackName || '');
+      if (nm) nm.value = nameVal;
+      if (nmro) nmro.textContent = nameVal;
       if (d.dev.has('display_name_plain')) pl.value = d.dev.get('display_name_plain');
       else pl.parentElement.innerHTML = '<span style="color:var(--dim)">–</span>';
-      const originalName = nm.value;
+      const originalName = nameVal;
       const originalPlain = d.dev.has('display_name_plain') ? pl.value : null;
       const mark = () => tr.classList.toggle('changed',
-        nm.value !== originalName ||
+        ((nm ? nm.value : originalName) !== originalName) ||
         (d.dev.has('display_name_plain') && pl.value !== originalPlain));
-      nm.addEventListener('input', () => {
-        d.dev.set(d.nameKey, nm.value);
-        if (d.rvnm && d.rvnm.value !== nm.value) d.rvnm.value = nm.value;
-        if (d.type === 'rack') {
-          document.querySelectorAll('.rack-name[data-rack-id="' + d.dev.get('id') + '"]').forEach(input => {
-            if (input.value !== nm.value) input.value = nm.value;
-          });
-          document.querySelectorAll('.rack[data-rack-id="' + d.dev.get('id') + '"]').forEach(cell => {
-            cell.textContent = '#' + d.dev.get('id') + ' ' + nm.value;
-          });
-        }
-        mark();
-      });
+      if (nm) {
+        nm.addEventListener('input', () => {
+          if (!d.nameKey) d.nameKey = 'name';
+          d.dev.set(d.nameKey, nm.value);
+          if (d.rvnm && d.rvnm.value !== nm.value) d.rvnm.value = nm.value;
+          if (d.type === 'rack') {
+            document.querySelectorAll('.rack-name[data-rack-id="' + d.dev.get('id') + '"]').forEach(input => {
+              if (input.value !== nm.value) input.value = nm.value;
+            });
+            document.querySelectorAll('.rack[data-rack-id="' + d.dev.get('id') + '"]').forEach(cell => {
+              cell.textContent = '#' + d.dev.get('id') + ' ' + nm.value;
+            });
+          }
+          mark();
+        });
+      }
       pl.addEventListener('input', () => {
         if (d.dev.has('display_name_plain')) d.dev.set('display_name_plain', pl.value);
         mark();
       });
       d.tr = tr; d.nm = nm; d.pl = pl;
       tbl.appendChild(tr);
+      if (showHostNics || showSwitchNics) {
+        const nicRow = document.createElement('tr');
+        nicRow.className = 'nic-detail-row';
+        let pairCells = '';
+        if (showHostNics) {
+          for (let i = 0; i < dynamicPortCount; i++) {
+            pairCells += '<td class="nic"><div class="port-pair-item">' + (nicTexts[i] || '–') + '</div></td>';
+          }
+        } else {
+          for (let i = 0; i < portPairCount; i++) {
+            const first = nicTexts[i * 2] || '–';
+            const second = nicTexts[i * 2 + 1] || '–';
+            pairCells += '<td class="nic"><div class="port-pair-item">' + first + '</div><div class="port-pair-item">' + second + '</div></td>';
+          }
+        }
+        nicRow.innerHTML = '<td></td>' + pairCells + '<td colspan="' + Math.max(0, (dynamicPortCount ? 6 : 0)) + '"></td>';
+        tbl.appendChild(nicRow);
+      }
     }
     div.appendChild(tbl);
     container.appendChild(div);
@@ -971,6 +1100,150 @@ function renderDevices() {
       grpsel.indeterminate = on > 0 && on < rs.length;
     });
   }
+}
+
+function collectHostNics(root) {
+  const collected = collectNetworkPorts(root, 'Host');
+  return { byHost: collected.byOwner, maxNics: collected.maxNics };
+}
+
+function collectNetworkPorts(root, ownerType) {
+  const byOwner = new Map();
+  const ports = root.get('ports');
+  if (!(ports instanceof Map)) return { byOwner, maxNics: 0 };
+  const cables = root.get('cables') || [];
+
+  const hostById = new Map();
+  const pool = root.get('pool');
+  if (pool instanceof Map) {
+    for (const h of (pool.get('hosts') || [])) {
+      if (h instanceof Map) hostById.set(h.get('id'), h);
+    }
+  }
+  const switchById = new Map();
+  const sw = root.get('switches');
+  if (sw instanceof Map) {
+    for (const s of sw.values()) if (s instanceof Map) switchById.set(s.get('id'), s);
+  }
+  const gatewayById = new Map();
+  for (const g of (root.get('gateways') || [])) {
+    if (g instanceof Map) gatewayById.set(g.get('id'), g);
+  }
+  const eddById = new Map();
+  for (const e of (root.get('edds') || [])) {
+    if (e instanceof Map) eddById.set(e.get('id'), e);
+  }
+  const patchById = new Map();
+  for (const p of (root.get('patch_panels') || [])) {
+    if (p instanceof Map) patchById.set(p.get('id'), p);
+  }
+
+  const portMeta = new Map();
+  for (const p of ports.values()) {
+    if (!(p instanceof Map)) continue;
+    const owner = p.get('owner');
+    if (!(owner instanceof Map)) continue;
+    const ownerType = [...owner.keys()][0];
+    portMeta.set(p.get('id'), {
+      ownerType,
+      ownerId: owner.get(ownerType),
+      index: p.get('index'),
+    });
+  }
+
+  const cableById = new Map();
+  for (const c of cables) {
+    if (!(c instanceof Map)) continue;
+    if (typeof c.get('id') === 'number') cableById.set(c.get('id'), c);
+  }
+
+  const devName = (m, fallback) => {
+    if (!(m instanceof Map)) return fallback;
+    return m.get('display_name') || m.get('name') || m.get('display_name_plain') || fallback;
+  };
+  const ownerLabel = (ownerType, ownerId) => {
+    if (ownerType === 'Host') return devName(hostById.get(ownerId), 'Host #' + ownerId);
+    if (ownerType === 'Switch') return devName(switchById.get(ownerId), 'Switch #' + ownerId);
+    if (ownerType === 'Gateway') return devName(gatewayById.get(ownerId), 'Gateway #' + ownerId);
+    if (ownerType === 'Edd') return devName(eddById.get(ownerId), 'Edd #' + ownerId);
+    if (ownerType === 'PatchPanel') return devName(patchById.get(ownerId), 'PatchPanel #' + ownerId);
+    return String(ownerType || 'Device') + ' #' + ownerId;
+  };
+
+  for (const p of ports.values()) {
+    if (!(p instanceof Map)) continue;
+    const owner = p.get('owner');
+    if (!(owner instanceof Map) || !owner.has(ownerType)) continue;
+    const kind = String(p.get('kind') || '');
+    if (!kind.toLowerCase().includes('network')) continue;
+    const ownerId = owner.get(ownerType);
+    if (typeof ownerId !== 'number') continue;
+    const connected = p.get('connected');
+    if (!byOwner.has(ownerId)) byOwner.set(ownerId, []);
+    const connectedTo = [];
+    const cableInfos = [];
+    const cableIds = Array.isArray(connected) ? connected.slice(0, 8) : [];
+    for (const cableId of cableIds) {
+      const c = cableById.get(cableId);
+      if (!(c instanceof Map)) continue;
+      cableInfos.push({
+        id: c.get('id'),
+        kind: c.get('kind') || null,
+        dacClass: c.get('dac_class') || null,
+        color: c.get('color') || null,
+      });
+      const aPort = c.get('a_port');
+      const bPort = c.get('b_port');
+      if (aPort === p.get('id') && typeof bPort === 'number') connectedTo.push(bPort);
+      else if (bPort === p.get('id') && typeof aPort === 'number') connectedTo.push(aPort);
+    }
+    const cableLabels = [];
+    const cableDetails = [];
+    const cableSeen = new Set();
+    for (const ci of cableInfos) {
+      const kindLabel = ci.kind ? cableTypeLabel(ci.kind, ci.dacClass) : 'Cable';
+      const fullLabel = [kindLabel, ci.color].filter(Boolean).join(' ') || 'Cable';
+      if (!cableSeen.has(ci.id)) {
+        cableSeen.add(ci.id);
+        cableLabels.push(fullLabel);
+        cableDetails.push({
+          id: ci.id,
+          label: kindLabel,
+          fallbackLabel: fullLabel,
+          color: ci.color || null,
+        });
+      }
+    }
+    const connectedLabels = connectedTo.map(id => {
+      const m = portMeta.get(id);
+      if (!m) return '#' + id;
+      const pnum = (typeof m.index === 'number') ? (m.index + 1) : '?';
+      return ownerLabel(m.ownerType, m.ownerId) + ' P' + pnum;
+    });
+    byOwner.get(ownerId).push({
+      portId: p.get('id'),
+      index: p.get('index') ?? 0,
+      state: p.get('state') || 'Unknown',
+      capacity: p.get('link_capacity_gbps'),
+      connectedCount: Array.isArray(connected) ? connected.length : 0,
+      connectedTo,
+      connectedLabels,
+      cableDetails,
+      cableLabels,
+    });
+  }
+  let maxNics = 0;
+  for (const [ownerId, nics] of byOwner.entries()) {
+    nics.sort((a, b) => a.index - b.index);
+    byOwner.set(ownerId, nics);
+    if (nics.length > maxNics) maxNics = nics.length;
+  }
+  return { byOwner, maxNics };
+}
+
+function collectSwitchNics(root) {
+  const collected = collectNetworkPorts(root, 'Switch');
+  return { bySwitch: collected.byOwner, maxNics: collected.maxNics };
 }
 
 // ---- Rack-View ----
@@ -990,6 +1263,8 @@ function uSizeOf(dev) {
 
 function rackPlacement(type, dev) {
   if (type === 'host' && dev.has('rack_id'))
+    return { rackId: dev.get('rack_id'), startU: dev.get('start_u') ?? 1 };
+  if (dev.has('rack_id'))
     return { rackId: dev.get('rack_id'), startU: dev.get('start_u') ?? 1 };
   const pl = dev.get('placement');
   if (pl instanceof Map && pl.get('Rack') instanceof Map) {
@@ -1015,7 +1290,9 @@ function computeRackLayout() {
     const pl = rackPlacement(d.type, d.dev);
     if (!pl || !racks.has(pl.rackId)) { unplaced++; continue; }
     racks.get(pl.rackId).devices.push({
-      type: d.type, name: d.dev.get(d.nameKey), ref: d,
+      type: d.type,
+      name: d.nameKey ? (d.dev.get(d.nameKey) ?? '') : (d.fallbackName || ''),
+      ref: d,
       startU: pl.startU, uSize: uSizeOf(d.dev),
     });
   }
@@ -1068,18 +1345,25 @@ function renderRackView() {
         dv.className = 'dev';
         dv.style.borderLeftColor = DEV_COLORS[cell.dev.type];
         dv.style.height = (cell.span * 16) + 'px';
-        dv.innerHTML = '<input type="text" class="rvnm"><span class="du">' +
+        const ref = cell.dev.ref;
+        dv.innerHTML = (ref.readonlyName
+          ? '<span class="rvnm roval"></span>'
+          : '<input type="text" class="rvnm">') + '<span class="du">' +
           'U' + cell.dev.startU + ' (' + cell.span + 'U)</span>';
         const rvnm = dv.querySelector('.rvnm');
-        const ref = cell.dev.ref;
         ref.rvnm = rvnm;
-        rvnm.value = ref.nm ? ref.nm.value : cell.dev.name;
-        rvnm.addEventListener('input', () => {
-          if (ref.nm && ref.nm.value !== rvnm.value) {
-            ref.nm.value = rvnm.value;
-            ref.nm.dispatchEvent(new Event('input'));  // marks the row as changed in the Devices tab
-          }
-        });
+        if (rvnm.tagName === 'INPUT') rvnm.value = ref.nm ? ref.nm.value : cell.dev.name;
+        else rvnm.textContent = ref.nm ? ref.nm.value : cell.dev.name;
+        if (ref.readonlyName) {
+          // readonly names are rendered as plain text
+        } else {
+          rvnm.addEventListener('input', () => {
+            if (ref.nm && ref.nm.value !== rvnm.value) {
+              ref.nm.value = rvnm.value;
+              ref.nm.dispatchEvent(new Event('input'));  // marks the row as changed in the Devices tab
+            }
+          });
+        }
         if (ref.nm) ref.nm.addEventListener('input', () => {
           if (rvnm.value !== ref.nm.value) rvnm.value = ref.nm.value;
         });
@@ -1107,6 +1391,45 @@ function renderRackView() {
 }
 
 function esc(s) { const d = document.createElement('span'); d.textContent = String(s ?? ''); return d.innerHTML; }
+
+const CABLE_COLOR_MAP = {
+  black: '#1f1f1f', blue: '#2563eb', brown: '#92400e', cyan: '#0891d1',
+  gray: '#6b7280', grey: '#6b7280', green: '#16a34a', orange: '#ea580c',
+  pink: '#db2777', purple: '#7c3aed', red: '#dc2626', white: '#f3f4f6',
+  violet: '#8b5cf6', aqua: '#22d3ee', lime: '#84cc16', magenta: '#d946ef',
+  yellow: '#facc15'
+};
+
+function cableColorToCss(name) {
+  const raw = String(name || '').trim();
+  if (!raw) return null;
+  const lowered = raw.toLowerCase();
+  if (CABLE_COLOR_MAP[lowered]) return CABLE_COLOR_MAP[lowered];
+  if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(raw)) return raw;
+  if (/^(rgb|hsl)a?\(/i.test(raw)) return raw;
+  return null;
+}
+
+function cableColorSwatches(colorValue) {
+  if (!colorValue) return '';
+  const parts = String(colorValue)
+    .split(/[\/,&+|]/)
+    .map(s => s.trim())
+    .filter(Boolean);
+  if (!parts.length) return '';
+  const seen = new Set();
+  const swatches = [];
+  for (const part of parts) {
+    const key = part.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const css = cableColorToCss(part);
+    if (!css) continue;
+    swatches.push('<span class="nic-color-box" style="background:' + esc(css) + '" title="' + esc(part) + '"></span>');
+  }
+  if (!swatches.length) return '';
+  return '<span class="nic-color-stack">' + swatches.join('') + '</span>';
+}
 
 // ---- Customers ----
 function renderCustomers() {
@@ -1145,6 +1468,44 @@ function renderCustomers() {
     tbl.querySelectorAll('.crowsel').forEach(c => c.checked = e.target.checked);
 }
 function custSelection() { return state.customers.filter(c => c.tr && c.tr.querySelector('.crowsel').checked); }
+function nextNumericId(items, key) {
+  return items.reduce((max, item) => Math.max(max, Number(item instanceof Map ? item.get(key) : item) || 0), 0) + 1;
+}
+function assignCustomerVrfs() {
+  const customers = state.customers.map(c => c.inner);
+  const vrfs = state.root.get('vrfs');
+  if (!customers.length || !Array.isArray(vrfs)) { alert(t('alert.vrfUnavailable')); return; }
+  const template = vrfs[0] instanceof Map ? vrfs[0] : new Map([['managed', true], ['uncontended', true]]);
+  let nextId = Math.max(Number(state.root.get('next_vrf_id')) || 0, nextNumericId(vrfs, 'id'));
+  let nextL3vni = Math.max(Number(state.root.get('next_l3vni')) || 0, nextNumericId(vrfs, 'l3vni'));
+  const byCustomerId = new Map();
+  for (const vrf of vrfs) {
+    if (!(vrf instanceof Map)) continue;
+    const membership = vrf.get('membership');
+    const explicit = membership instanceof Map ? membership.get('explicit') : null;
+    if (Array.isArray(explicit) && explicit.length === 1) byCustomerId.set(explicit[0], vrf);
+  }
+  for (const customer of customers) {
+    const customerId = customer.get('id');
+    const name = String(customer.get('name') || ('Customer ' + customerId));
+    let vrf = byCustomerId.get(customerId);
+    if (!vrf) {
+      vrf = new Map(template);
+      vrf.set('id', nextId++);
+      vrf.set('name', name);
+      vrf.set('l3vni', nextL3vni++);
+      vrfs.push(vrf);
+      byCustomerId.set(customerId, vrf);
+    } else {
+      vrf.set('name', name);
+    }
+    vrf.set('membership', new Map([['tier_rule', null], ['explicit', [customerId]]]));
+  }
+  state.root.set('next_vrf_id', nextId);
+  state.root.set('next_l3vni', nextL3vni);
+  renderNetwork();
+  alert(t('alert.vrfApplied', customers.length));
+}
 
 // ---- Player ----
 const PLAYER_FIELDS = [
@@ -1245,7 +1606,6 @@ function upgradeAllHostNics(r) {
     }
     h.set('nic_modules', newMods);
   }
-  updateHostNicCables(r, 'Sfp28', 25);
   r.set('next_port_id', nextPortId);
   alert(t('alert.nicUpgrade', changedModules, changedPorts, hosts.length));
 }
@@ -1296,7 +1656,6 @@ function convertAllHostNics10g(r) {
       }
     }
   }
-  updateHostNicCables(r, 'SfpPlus', 10);
   r.set('next_port_id', nextPortId);
   alert(t('alert.nic10g', changedModules, changedPorts, hosts.length));
 }
@@ -1306,26 +1665,6 @@ function hostNicStatus(r, media, capacity) {
   const current = hosts.filter(h => (h.get('nic_modules') || []).some(m =>
     m instanceof Map && m.get('media') === media && m.get('link_capacity_gbps') === capacity)).length;
   return t('repair.hostNicStatus', current, hosts.length);
-}
-
-function updateHostNicCables(r, media, capacity) {
-  const ports = r.get('ports');
-  const cables = r.get('cables') || [];
-  if (!(ports instanceof Map) || !Array.isArray(cables)) return;
-  const hostModulePortIds = new Set([...ports.values()].filter(p => {
-    const owner = p.get('owner');
-    return owner instanceof Map && owner.has('Host') && p.get('kind') === 'NetworkData' && p.get('index') >= 6 &&
-      p.get('media') === media && p.get('link_capacity_gbps') === capacity;
-  }).map(p => p.get('id')));
-  const cableKind = capacity === 25 ? 'Dac25G' : 'Dac';
-  for (const cable of cables) {
-    const a = cable.get('a');
-    const b = cable.get('b');
-    if (cable.get('kind') === 'Power' || !(a instanceof Map) || !(b instanceof Map)) continue;
-    if (hostModulePortIds.has(cable.get('a_port')) || hostModulePortIds.has(cable.get('b_port'))) {
-      cable.set('kind', cableKind);
-    }
-  }
 }
 
 function captureNicState(r) {
@@ -1499,7 +1838,10 @@ const OWNER_TYPE = { Host:'host', Switch:'switch', Gateway:'gw', Appliance:'fw',
 
 function deviceNameLookup() {
   const map = new Map(); // "type:id" -> name
-  for (const d of state.devices) map.set(d.type + ':' + d.dev.get('id'), d.dev.get(d.nameKey));
+  for (const d of state.devices) {
+    const nm = d.nameKey ? (d.dev.get(d.nameKey) ?? '') : (d.fallbackName || '');
+    map.set(d.type + ':' + d.dev.get('id'), nm);
+  }
   return map;
 }
 
@@ -1680,6 +2022,122 @@ function renderNetwork() {
     t2.appendChild(tr);
   }
   vrfC.appendChild(t2);
+  renderCableEditor(r);
+}
+
+const CABLE_OPTIONS = [
+  { kind:'Cat6a', speed:1, colors:['Orange','Blue','Green','Purple','Grey','Black','Red','White','Yellow','Pink','Aqua','Violet'] },
+  { kind:'Dac', speed:10, colors:['Black','Blue','Green','Red','Grey','White'] },
+  { kind:'Aoc10G', speed:10, colors:['Black','Aqua','Yellow','Blue','Pink','Violet'] },
+  { kind:'Dac25G', speed:25, colors:['Black','Blue','Green','Red','Grey','White'] },
+  { kind:'Aoc25G', speed:25, colors:['Black','Aqua','Yellow','Blue','Pink','Violet'] },
+  { kind:'Dac40G', speed:40, colors:['Black','Blue','Green','Red','Grey','White'] },
+  { kind:'Aoc40G', speed:40, colors:['Black','Aqua','Yellow','Blue','Pink','Violet'] },
+  { kind:'MmfOm4', speed:40, colors:['Orange','Aqua','Violet','Lime','Cyan','Magenta'] },
+  { kind:'Dac100G', speed:100, colors:['Black','Blue','Green','Red','Grey','White'] },
+  { kind:'Aoc100G', speed:100, colors:['Black','Aqua','Yellow','Blue','Pink','Violet'] },
+  { kind:'Dac200G', speed:200, colors:['Black','Blue','Green','Red','Grey','White'] },
+  { kind:'Aoc200G', speed:200, colors:['Black','Aqua','Yellow','Blue','Pink','Violet'] },
+  { kind:'Dac400G', speed:400, colors:['Black','Blue','Green','Red','Grey','White'] },
+  { kind:'Aoc400G', speed:400, colors:['Black','Aqua','Yellow','Blue','Pink','Violet'] },
+  { kind:'MmfOm5', speed:400, colors:['Orange','Aqua','Violet','Lime','Cyan','Magenta'] },
+  { kind:'SmfOs2_400G', speed:400, colors:['Blue','Yellow','Orange','Black'] },
+];
+
+function cablePortLabel(port, portById, names) {
+  if (!(port instanceof Map)) return 'Unknown';
+  const owner = port.get('owner');
+  if (!(owner instanceof Map)) return 'Port #' + port.get('id');
+  const ownerType = [...owner.keys()][0];
+  const ownerId = owner.get(ownerType);
+  const type = OWNER_TYPE[ownerType];
+  const name = names.get(type + ':' + ownerId) || ownerType + ' #' + ownerId;
+  return name + ' P' + (Number(port.get('index')) + 1);
+}
+
+function cableTypeLabel(kind, dacClass) {
+  const base = String(kind || 'Cable');
+  return base.startsWith('Dac') && String(dacClass || '').toLowerCase() === 'active'
+    ? 'Active' + base
+    : base;
+}
+
+function cableTypeChoices(option) {
+  if (!option.kind.startsWith('Dac')) return [{ value: option.kind, label: option.kind, dacClass: null }];
+  return [
+    { value: option.kind, label: option.kind, dacClass: 'Passive' },
+    { value: 'Active' + option.kind, label: 'Active' + option.kind, dacClass: 'Active' },
+  ];
+}
+
+function renderCableEditor(r) {
+  const container = document.getElementById('netCables');
+  if (!container) return;
+  const ports = r.get('ports');
+  const cables = r.get('cables') || [];
+  if (!(ports instanceof Map) || !Array.isArray(cables)) { container.textContent = 'No cable data found.'; return; }
+  const names = deviceNameLookup();
+  const portById = new Map([...ports.values()].filter(p => p instanceof Map).map(p => [p.get('id'), p]));
+  const tbl = document.createElement('table');
+  tbl.className = 'cable-editor';
+  tbl.innerHTML = '<tr><th>Cable</th><th>Endpoint A</th><th>Endpoint B</th><th>Type</th><th>Color</th></tr>';
+  for (const cable of cables) {
+    if (!(cable instanceof Map) || cable.get('kind') === 'Power') continue;
+    const a = portById.get(cable.get('a_port')), b = portById.get(cable.get('b_port'));
+    const aSpeed = Number(a?.get('link_capacity_gbps')) || 0;
+    const bSpeed = Number(b?.get('link_capacity_gbps')) || 0;
+    const maxSpeed = Math.min(aSpeed || Infinity, bSpeed || Infinity);
+    const currentKind = String(cable.get('kind') || '');
+    const currentDacClass = String(cable.get('dac_class') || '');
+    const currentValue = cableTypeLabel(currentKind, currentDacClass);
+    const typeOptions = CABLE_OPTIONS.filter(o => o.kind === 'Cat6a'
+      ? maxSpeed === 1
+      : (o.speed <= maxSpeed || o.kind === currentKind));
+    const tr = document.createElement('tr');
+    tr.id = 'cable-' + cable.get('id');
+    if (state.changedCables.has(cable.get('id'))) tr.classList.add('changed');
+    tr.innerHTML = '<td class="id">#' + cable.get('id') + '</td>' +
+      '<td>' + esc(cablePortLabel(a, portById, names)) + '<div class="speed">' + aSpeed + ' Gbps max</div></td>' +
+      '<td>' + esc(cablePortLabel(b, portById, names)) + '<div class="speed">' + bSpeed + ' Gbps max</div></td>' +
+      '<td><select class="cable-kind"></select></td><td><select class="cable-color"></select></td>';
+    const kindSelect = tr.querySelector('.cable-kind');
+    const colorSelect = tr.querySelector('.cable-color');
+    for (const option of typeOptions) {
+      for (const choice of cableTypeChoices(option)) {
+        kindSelect.add(new Option(choice.label + ' (' + option.speed + 'G)', choice.value));
+      }
+    }
+    kindSelect.value = currentValue;
+    if (!kindSelect.value) kindSelect.value = currentKind;
+    const fillColors = () => {
+      const selectedKind = kindSelect.value.replace(/^Active(?=Dac)/, '');
+      const selected = CABLE_OPTIONS.find(o => o.kind === selectedKind);
+      const previous = colorSelect.value || String(cable.get('color') || '');
+      colorSelect.replaceChildren();
+      for (const color of (selected?.colors || [])) colorSelect.add(new Option(color, color));
+      colorSelect.value = (selected?.colors || []).includes(previous) ? previous : (selected?.colors[0] || '');
+      cable.set('color', colorSelect.value || null);
+    };
+    fillColors();
+    kindSelect.addEventListener('change', () => {
+      const active = kindSelect.value.startsWith('ActiveDac');
+      cable.set('kind', active ? kindSelect.value.slice('Active'.length) : kindSelect.value);
+      if (active) cable.set('dac_class', 'Active');
+      else if (kindSelect.value.startsWith('Dac')) cable.set('dac_class', 'Passive');
+      else cable.delete('dac_class');
+      fillColors();
+      state.changedCables.add(cable.get('id'));
+      renderDevices(); renderCableEditor(r);
+    });
+    colorSelect.addEventListener('change', () => {
+      cable.set('color', colorSelect.value || null);
+      state.changedCables.add(cable.get('id'));
+      renderDevices();
+      tr.classList.add('changed');
+    });
+    tbl.appendChild(tr);
+  }
+  container.replaceChildren(tbl);
 }
 
 function sparkSvg(vals) {
@@ -1740,12 +2198,27 @@ document.getElementById('custMult').addEventListener('click', () => {
   const v = document.getElementById('custMultVal').value;
   custSelection().forEach(c => { c.pm.value = v; c.tr.classList.add('changed'); });
 });
+document.getElementById('custVrfs').addEventListener('click', assignCustomerVrfs);
 
 // Tabs
+function showCableInNetwork(cableId) {
+  const tabBtn = document.querySelector('#nav button[data-tab="network"]');
+  if (tabBtn) tabBtn.click();
+  const row = document.getElementById('cable-' + cableId);
+  if (!row) return;
+  document.querySelectorAll('#netCables tr.highlighted').forEach(r => r.classList.remove('highlighted'));
+  row.classList.add('highlighted');
+  row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
 document.getElementById('nav').addEventListener('click', e => {
   const btn = e.target.closest('button[data-tab]'); if (!btn) return;
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('active', b === btn));
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + btn.dataset.tab));
+});
+document.getElementById('tab-devices').addEventListener('click', e => {
+  const btn = e.target.closest('.cable-link'); if (!btn) return;
+  showCableInNetwork(btn.dataset.cableId);
 });
 
 // ============ Download ============
