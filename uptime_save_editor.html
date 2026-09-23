@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Uptime Save Editor</title>
+<title>Uptime Save Tools</title>
 <style>
 
 :root[data-theme="light"] {
@@ -30,7 +30,7 @@ aside{width:216px;flex-shrink:0;background:var(--sidebar);border-right:1px solid
   display:flex;flex-direction:column;padding:18px 12px;position:sticky;top:0;height:100vh}
 aside .brand{font-weight:800;font-size:14px;letter-spacing:-.01em;padding:6px 10px 18px;color:var(--text)}
 aside .brand span{color:var(--accent)}
-nav{display:flex;flex-direction:column;gap:2px;display:none}
+nav{display:flex;flex-direction:column;gap:2px}
 nav button{background:none;border:none;text-align:left;color:var(--dim);
   font-family:inherit;font-weight:600;font-size:13px;padding:9px 10px;border-radius:8px;cursor:pointer;
   display:flex;align-items:center;gap:9px}
@@ -151,6 +151,37 @@ tr.changed input, tr.changed select{border-color:var(--amber)}
 .drop.big{width:440px;max-width:90%;padding:56px 40px;font-size:16px;font-weight:700}
 .drop.big .sub{display:block;margin-top:8px;font-size:12px;color:var(--dim);font-weight:400}
 
+/* ---- Converter ---- */
+.page-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:16px}
+.page-heading h1{margin:0;font-family:Georgia,serif;font-size:22px;font-weight:400;color:var(--text)}
+.page-heading p{margin:4px 0 0;color:var(--dim);font-size:12px}
+.page-kicker{color:var(--accent);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.converter-grid{display:grid;grid-template-columns:280px minmax(0,1fr);gap:12px;min-height:calc(100vh - 120px)}
+.converter-rail,.converter-editor{background:var(--panel);border:1px solid var(--line);border-radius:6px}
+.converter-rail{display:flex;flex-direction:column;padding:16px}
+.converter-rail .drop{min-height:180px;display:grid;place-items:center;padding:20px}
+.converter-rail .drop strong,.converter-rail .drop span{display:block}
+.converter-rail .drop strong{color:var(--text);font-size:13px;margin-bottom:4px}
+.converter-file{min-height:70px;margin:14px 0;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.converter-file-name{overflow-wrap:anywhere;color:var(--text);font-family:"JetBrains Mono",Consolas,monospace;font-size:11px}
+.converter-file-meta,.converter-status{color:var(--dim);font-size:11px;margin-top:5px}
+.converter-status{margin-top:auto;padding-top:16px}.converter-status.ok{color:var(--green)}.converter-status.error{color:var(--red)}
+.converter-actions{display:grid;gap:7px}.converter-actions button{width:100%}.converter-actions button:disabled{opacity:.4;cursor:not-allowed}
+.converter-editor{display:flex;min-width:0;overflow:hidden;flex-direction:column}
+.converter-editor-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--panel2)}
+.converter-editor-bar>label{color:var(--accent);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.converter-tools,.converter-search{display:flex;align-items:center;gap:8px;min-width:0}.converter-search{border:1px solid var(--line);border-radius:4px;background:var(--bg)}
+.converter-search:focus-within{border-color:var(--accent)}
+.converter-search input{width:min(280px,30vw);border:0;background:transparent;color:var(--text);padding:7px 9px;outline:0}
+.converter-search button{min-width:30px;border:0;border-left:1px solid var(--line);border-radius:0;padding:6px}
+.converter-match,.converter-lines{color:var(--dim);font:11px "JetBrains Mono",Consolas,monospace;white-space:nowrap}
+.converter-text-wrap{position:relative;display:flex;min-height:0;flex:1;overflow:hidden;background:#0b0c0d}
+#converterText{position:relative;z-index:2;width:100%;min-height:560px;resize:none;border:0;outline:0;padding:16px;color:#d9d6d0;background:transparent;font:12px/1.6 "JetBrains Mono",Consolas,monospace;tab-size:2}
+#converterText::selection{color:#211306;background:#e6a24a}
+.converter-highlight{position:absolute;z-index:1;display:none;pointer-events:none;border-bottom:3px solid var(--accent);background:rgba(230,162,74,.55)}
+body.converter-mode #topbar{display:none}
+body.converter-mode main{padding-top:20px}
+
 /* ---- Load-Status Badges ---- */
 .statusBadge{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;
   padding:4px 11px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);color:var(--dim)}
@@ -197,7 +228,7 @@ tr.changed input, tr.changed select{border-color:var(--amber)}
   --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 22px rgba(0,0,0,.16);
 }
 :root[data-theme="light"] {
-  --bg:#ecebe8; --sidebar:#171717; --panel:#f8f7f4; --panel2:#eeece8; --line:#d3d0c9;
+  --bg:#ecebe8; --sidebar:#f8f7f4; --panel:#f8f7f4; --panel2:#eeece8; --line:#d3d0c9;
   --text:#242321; --dim:#77736b; --accent:#b96724; --accent2:#3d8a42;
   --amber:#a96b1d; --cyan:#237da8; --green:#3d8a42; --violet:#76569b; --red:#b5413b;
   --shadow:0 1px 2px rgba(35,31,25,.08),0 5px 16px rgba(35,31,25,.08);
@@ -211,6 +242,12 @@ nav button::before{width:7px;height:7px;border-radius:1px;background:#66625d}
 nav button:hover{background:#242322;color:#eee9df}
 nav button.active{background:#3b3027;color:#fff1df;border-left:3px solid var(--accent);padding-left:7px}
 nav button.active::before{background:var(--accent)}
+.tool-switch{display:grid;gap:3px;margin:0 0 18px}
+.tool-switch .tool-label{padding:0 10px 5px;color:#66625d;font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.tool-switch a{display:flex;align-items:center;min-height:34px;border-left:3px solid transparent;padding:0 10px;
+  color:#aaa69e;text-decoration:none;font-size:12px;font-weight:600}
+.tool-switch a:hover{background:#242322;color:#eee9df}
+.tool-switch a.active{background:#3b3027;color:#fff1df;border-left-color:var(--accent)}
 #themeToggle,#langToggle{background:#1b1c1c;border-color:#303130;border-radius:4px;color:#bcb8b0;font-size:11px;padding:7px 10px}
 .topbar{background:var(--bg);border-bottom:1px solid var(--line);padding:14px 28px}
 main{max-width:1400px;padding:16px 28px 100px}
@@ -228,6 +265,20 @@ tr:hover td{background:#242422}
 #downloadBtn{border-radius:4px;background:var(--accent);border-color:var(--accent);box-shadow:0 8px 20px rgba(216,137,56,.22)}
 .statusBadge{border-radius:4px;padding:4px 9px}
 .drop{border-radius:6px}
+:root[data-theme="light"] aside{border-right-color:var(--line)}
+:root[data-theme="light"] aside .brand{color:#3d8a42}
+:root[data-theme="light"] aside .brand span{color:var(--accent)}
+:root[data-theme="light"] nav button{color:#625f59}
+:root[data-theme="light"] nav button::before{background:#9a958c}
+:root[data-theme="light"] nav button:hover{background:#e7e3dc;color:var(--text)}
+:root[data-theme="light"] nav button.active{background:#f0dfce;color:#713b12}
+:root[data-theme="light"] nav button.active::before{background:var(--accent)}
+:root[data-theme="light"] #themeToggle,
+:root[data-theme="light"] #langToggle{background:#eeece8;border-color:var(--line);color:var(--text)}
+:root[data-theme="light"] .converter-text-wrap{background:#fff}
+:root[data-theme="light"] #converterText{color:#242321}
+:root[data-theme="light"] #converterText::selection{color:#242321;background:#efc98f}
+:root[data-theme="light"] tr:hover td{background:#eeece8}
 @media (max-width:760px){
   body{display:block}
   aside{width:100%;height:auto;position:static;border-right:0;border-bottom:1px solid var(--line);padding:10px}
@@ -242,14 +293,15 @@ tr:hover td{background:#242422}
   .grid{grid-template-columns:1fr}
   .drop.big{width:100%;padding:38px 20px}
   #downloadBtn{right:14px;bottom:14px}
+  .converter-grid{grid-template-columns:1fr}.converter-editor-bar{align-items:stretch;flex-direction:column}.converter-tools{justify-content:space-between}.converter-search input{width:min(52vw,280px)}
 }
 </style>
 </head>
-<body data-theme="dark">
+<body data-theme="dark" class="converter-mode">
 <aside>
-  <div class="brand">UPTIME <span>Editor</span></div>
+  <div class="brand">UPTIME <span>Save Tools</span></div>
   <nav id="nav">
-    <button data-tab="devices" class="active" data-i18n="nav.devices">Devices</button>
+    <button data-tab="devices" data-i18n="nav.devices">Devices</button>
     <button data-tab="rackview" data-i18n="nav.rackview">Rack View</button>
     <button data-tab="network" data-i18n="nav.network">Network</button>
     <button data-tab="customers" data-i18n="nav.customers">Customers</button>
@@ -257,6 +309,7 @@ tr:hover td{background:#242422}
     <button data-tab="repair" data-i18n="nav.repair">Repair</button>
     <button id="tuningNav" data-tab="tuning" data-i18n="nav.tuning">Tuning</button>
     <button data-tab="stats" data-i18n="nav.stats">Statistics</button>
+    <button data-tab="converter" class="active">JSON</button>
   </nav>
   <div class="spacer"></div>
   <button id="langToggle" style="margin-bottom:6px">EN</button>
@@ -280,8 +333,46 @@ tr:hover td{background:#242422}
     </div>
   </div>
   <main>
+  <!-- CONVERTER -->
+  <div class="tab active" id="tab-converter">
+    <div class="page-heading">
+      <div><div class="page-kicker">Local save utility</div><h1>Save Converter</h1><p>Round-trip Uptime saves through editable, type-safe JSON.</p></div>
+      <span class="statusBadge">CSIM / MessagePack</span>
+    </div>
+    <div class="converter-grid">
+      <section class="converter-rail" aria-label="Converter file operations">
+        <label class="drop" id="converterDrop" for="converterFile">
+          <div><strong>Drop a save or JSON file</strong><span>or click to browse</span></div>
+          <input id="converterFile" type="file" accept=".save,.bak,.json,application/json,application/octet-stream">
+        </label>
+        <div class="converter-file"><div class="converter-file-name" id="converterFileName">No file loaded</div><div class="converter-file-meta" id="converterFileMeta">Waiting for input</div></div>
+        <div class="converter-actions">
+          <button class="primary" id="converterDownloadJson" disabled>Download JSON</button>
+          <button id="converterDownloadSave" disabled>Build .save + metadata</button>
+          <button id="converterFormat" disabled>Format JSON</button>
+        </div>
+        <div class="converter-status" id="converterStatus" role="status" aria-live="polite">Ready</div>
+      </section>
+      <section class="converter-editor">
+        <div class="converter-editor-bar">
+          <label for="converterText">JSON editor</label>
+          <div class="converter-tools">
+            <div class="converter-search" role="search">
+              <input id="converterSearch" type="search" placeholder="Search JSON" aria-label="Search JSON">
+              <span class="converter-match" id="converterMatch">0 / 0</span>
+              <button id="converterPrevious" type="button" title="Previous match" aria-label="Previous match" disabled>↑</button>
+              <button id="converterNext" type="button" title="Next match" aria-label="Next match" disabled>↓</button>
+            </div>
+            <span class="converter-lines" id="converterLines">0 lines</span>
+          </div>
+        </div>
+        <div class="converter-text-wrap"><textarea id="converterText" wrap="off" spellcheck="false" placeholder="Load a .save file or paste JSON here"></textarea><span class="converter-highlight" id="converterHighlight" aria-hidden="true"></span></div>
+      </section>
+    </div>
+  </div>
+
 <!-- DEVICES -->
-  <div class="tab active" id="tab-devices">
+  <div class="tab" id="tab-devices">
     <div class="toolbar" id="devToolbar" style="display:none">
       <span class="lbl" data-i18n="devices.prefix">Prefix</span>
       <input type="text" id="prefix" value="AZ_01_">
@@ -861,23 +952,50 @@ function collectCustomers(root) {
 }
 
 // ============ Loading & rendering ============
-function loadFile(file) {
+function converterJsonToEditorValue(value) {
+  if (Array.isArray(value)) return value.map(converterJsonToEditorValue);
+  if (typeof value === 'number') return Number.isInteger(value) ? value : new F(value);
+  if (!value || typeof value !== 'object') return value;
+
+  const keys = Object.keys(value);
+  if (keys.length === 1 && keys[0] === '$msgpackInt') return BigInt(value.$msgpackInt);
+  if (keys.length === 1 && keys[0] === '$msgpackFloat') return new F(Number(value.$msgpackFloat));
+  if (keys.length === 1 && keys[0] === '$msgpackBinary') {
+    const binary = atob(value.$msgpackBinary);
+    return Uint8Array.from(binary, character => character.charCodeAt(0));
+  }
+  if (keys.length === 1 && keys[0] === '$msgpackMap') {
+    return new Map(value.$msgpackMap.map(([key, item]) => [
+      converterJsonToEditorValue(key),
+      converterJsonToEditorValue(item)
+    ]));
+  }
+  if (keys.length === 1 && keys[0] === '$msgpackExt') {
+    throw new Error('This save contains a MessagePack extension value that the visual editor cannot modify safely.');
+  }
+  return new Map(Object.entries(value).map(([key, item]) => [key, converterJsonToEditorValue(item)]));
+}
+
+function loadFile(file, activateView = true, showMetaPrompt = true) {
   const reader = new FileReader();
   reader.onload = () => {
     try {
       const buf = new Uint8Array(reader.result);
-      const magic = new TextDecoder().decode(buf.slice(0, 5));
-      if (!/^CSIM\d+$/.test(magic)) throw new Error(t('alert.notUptimeSave'));
-      const [root] = mpDecode(buf, 5);
-      state = { header: buf.slice(0, 5), root, filename: file.name,
+      if (!window.saveConverter) throw new Error('The shared save decoder is not available.');
+      const decoded = window.saveConverter.decodeSave(buf);
+      const payload = { ...decoded };
+      delete payload.$csimVersion;
+      const root = converterJsonToEditorValue(payload);
+      state = { header: buf.slice(0, 5), root, filename: file.name, fileSize: file.size,
                 devices: collectDevices(root), customers: collectCustomers(root), changedCables: new Set() };
-      renderAll(file);
+      renderAll(file, activateView, showMetaPrompt);
+      window.saveConverter?.loadFile(file);
     } catch (e) { alert(t('alert.errorLoading', e.message)); console.error(e); }
   };
   reader.readAsArrayBuffer(file);
 }
 
-function renderAll(file) {
+function renderAll(file, activateView = true, showMetaPrompt = true) {
   const r = state.root;
   const fi = document.getElementById('fileinfo');
   fi.classList.add('show');
@@ -886,6 +1004,7 @@ function renderAll(file) {
   document.getElementById('fmeta').textContent = t('fileinfo.summary',
     r.get('scenario_id') || '?', r.get('current_site') || '?', state.devices.length, state.customers.length);
   document.getElementById('nav').style.display = 'flex';
+  if (activateView) document.querySelector('button[data-tab="devices"]').click();
   const tuningAvailable = r.get('scenario_id') === 'sandbox';
   const tuningNav = document.getElementById('tuningNav');
   tuningNav.style.display = tuningAvailable ? '' : 'none';
@@ -895,7 +1014,7 @@ function renderAll(file) {
   }
   document.getElementById('downloadBtn').classList.add('show');
   updateLoadStatusBar();
-  openLoadMetaModal();
+  if (showMetaPrompt) openLoadMetaModal();
 
   const topbar = document.getElementById('topbar');
   const drop = document.getElementById('drop');
@@ -919,6 +1038,11 @@ function renderAll(file) {
 
   renderDevices(); renderRackView(); renderNetwork(); renderCustomers(); renderPlayer(); renderRepair(); renderTuning(); renderStats();
 }
+
+window.loadEditorSave = (file, options = {}) => {
+  if (!options.force && state?.filename === file.name && state.fileSize === file.size) return;
+  loadFile(file, false, options.showMetaPrompt !== false);
+};
 
 // ---- Dark/Light Theme Toggle ----
 (function initTheme() {
@@ -1107,6 +1231,12 @@ function collectHostNics(root) {
   return { byHost: collected.byOwner, maxNics: collected.maxNics };
 }
 
+function effectivePortCapacityGbps(port) {
+  if (!(port instanceof Map)) return 0;
+  if (String(port.get('kind') || '').toLowerCase() === 'mlagkeepalive') return 1;
+  return Number(port.get('link_capacity_gbps')) || 0;
+}
+
 function collectNetworkPorts(root, ownerType) {
   const byOwner = new Map();
   const ports = root.get('ports');
@@ -1175,7 +1305,7 @@ function collectNetworkPorts(root, ownerType) {
     const owner = p.get('owner');
     if (!(owner instanceof Map) || !owner.has(ownerType)) continue;
     const kind = String(p.get('kind') || '');
-    if (!kind.toLowerCase().includes('network')) continue;
+    if (!kind.toLowerCase().includes('network') && kind.toLowerCase() !== 'mlagkeepalive') continue;
     const ownerId = owner.get(ownerType);
     if (typeof ownerId !== 'number') continue;
     const connected = p.get('connected');
@@ -1224,7 +1354,7 @@ function collectNetworkPorts(root, ownerType) {
       portId: p.get('id'),
       index: p.get('index') ?? 0,
       state: p.get('state') || 'Unknown',
-      capacity: p.get('link_capacity_gbps'),
+      capacity: effectivePortCapacityGbps(p),
       connectedCount: Array.isArray(connected) ? connected.length : 0,
       connectedTo,
       connectedLabels,
@@ -1952,7 +2082,7 @@ function renderNetwork() {
       const errors = c ? Number(c.get('errors_lifetime') || 0) : 0;
       const flaps = c ? Number(c.get('link_flaps') || 0) : 0;
       resolved.push({ id: p.get('id'), owner: name, type, kind: p.get('kind'), state: p.get('state'),
-        capGbps: p.get('link_capacity_gbps'), totalBytes, errors, flaps });
+        capGbps: effectivePortCapacityGbps(p), totalBytes, errors, flaps });
     }
   }
 
@@ -2084,8 +2214,8 @@ function renderCableEditor(r) {
   for (const cable of cables) {
     if (!(cable instanceof Map) || cable.get('kind') === 'Power') continue;
     const a = portById.get(cable.get('a_port')), b = portById.get(cable.get('b_port'));
-    const aSpeed = Number(a?.get('link_capacity_gbps')) || 0;
-    const bSpeed = Number(b?.get('link_capacity_gbps')) || 0;
+    const aSpeed = effectivePortCapacityGbps(a);
+    const bSpeed = effectivePortCapacityGbps(b);
     const maxSpeed = Math.min(aSpeed || Infinity, bSpeed || Infinity);
     const currentKind = String(cable.get('kind') || '');
     const currentDacClass = String(cable.get('dac_class') || '');
@@ -2107,16 +2237,20 @@ function renderCableEditor(r) {
         kindSelect.add(new Option(choice.label + ' (' + option.speed + 'G)', choice.value));
       }
     }
+    if (![...kindSelect.options].some(option => option.value === currentValue)) {
+      kindSelect.add(new Option(currentValue + ' (current)', currentValue), 0);
+    }
     kindSelect.value = currentValue;
-    if (!kindSelect.value) kindSelect.value = currentKind;
     const fillColors = () => {
       const selectedKind = kindSelect.value.replace(/^Active(?=Dac)/, '');
       const selected = CABLE_OPTIONS.find(o => o.kind === selectedKind);
       const previous = colorSelect.value || String(cable.get('color') || '');
       colorSelect.replaceChildren();
       for (const color of (selected?.colors || [])) colorSelect.add(new Option(color, color));
-      colorSelect.value = (selected?.colors || []).includes(previous) ? previous : (selected?.colors[0] || '');
-      cable.set('color', colorSelect.value || null);
+      if (previous && !(selected?.colors || []).includes(previous)) {
+        colorSelect.add(new Option(previous + ' (current)', previous), 0);
+      }
+      colorSelect.value = previous;
     };
     fillColors();
     kindSelect.addEventListener('change', () => {
@@ -2213,8 +2347,12 @@ function showCableInNetwork(cableId) {
 
 document.getElementById('nav').addEventListener('click', e => {
   const btn = e.target.closest('button[data-tab]'); if (!btn) return;
+  const currentTab = document.querySelector('#nav button.active')?.dataset.tab;
+  if (btn.dataset.tab === 'converter' && currentTab !== 'converter') syncEditorToJson();
+  if (currentTab === 'converter' && btn.dataset.tab !== 'converter' && !window.saveConverter?.syncEditorFromJson()) return;
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('active', b === btn));
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + btn.dataset.tab));
+  document.body.classList.toggle('converter-mode', btn.dataset.tab === 'converter');
 });
 document.getElementById('tab-devices').addEventListener('click', e => {
   const btn = e.target.closest('.cable-link'); if (!btn) return;
@@ -2222,60 +2360,68 @@ document.getElementById('tab-devices').addEventListener('click', e => {
 });
 
 // ============ Download ============
+function commitEditorChanges() {
+  if (!state) return null;
+  const r = state.root;
+  for (const d of state.devices) {
+    if (!d.nm) continue;
+    d.dev.set(d.nameKey, d.nm.value);
+    if (d.dev.has('display_name_plain')) d.dev.set('display_name_plain', d.pl.value);
+  }
+  for (const c of state.customers) {
+    if (!c.nm) continue;
+    c.inner.set('name', c.nm.value);
+    const hp = parseFloat(c.hp.value); if (!isNaN(hp)) c.entry.set('health', new F(Math.min(1, Math.max(0, hp))));
+    const pm = parseFloat(c.pm.value); if (!isNaN(pm) && pm >= 0) c.entry.set('price_multiplier', new F(pm));
+    c.entry.set('on_probation', c.pr.checked);
+    const sla = parseInt(c.sla.value); if (!isNaN(sla) && sla >= 0) c.entry.set('sla_credits', sla);
+  }
+  for (const f of PLAYER_FIELDS) {
+    if (!f.input || !r.has(f.key)) continue;
+    if (f.kind === 'bool') r.set(f.key, f.input.checked);
+    else if (f.kind === 'money') {
+      const e = parseFloat(f.input.value);
+      if (!isNaN(e) && e >= 0) r.set(f.key, BigInt(Math.round(e * 100)) * (SCALE / 100n));
+    } else if (f.kind === 'float') {
+      const v = parseFloat(f.input.value);
+      if (!isNaN(v)) r.set(f.key, new F(v));
+    } else if (f.kind === 'int') {
+      const v = parseInt(f.input.value);
+      if (!isNaN(v) && v >= 0) r.set(f.key, v);
+    } else if (f.kind === 'text' && f.input.value) r.set(f.key, f.input.value);
+  }
+  for (const t of tuningRows) {
+    let v;
+    if (t.isB) v = t.inp.checked;
+    else {
+      const p = parseFloat(t.inp.value); if (isNaN(p)) continue;
+      v = t.isF ? new F(p) : (Number.isInteger(p) ? p : new F(p));
+    }
+    t.cfgT.set(t.k, v);
+    if (t.baseT instanceof Map && t.baseT.has(t.k)) t.baseT.set(t.k, v);
+  }
+  for (const s of statInputs) {
+    const e = parseFloat(s.inp.value);
+    if (!isNaN(e) && e >= 0) r.set(s.key, BigInt(Math.round(e * 100)) * (SCALE / 100n));
+  }
+  return r;
+}
+
+function syncEditorToJson() {
+  const r = commitEditorChanges();
+  if (!r || !window.saveConverter) return;
+  const body = mpEncode(r);
+  const out = new Uint8Array(5 + body.length);
+  out.set(state.header);
+  out.set(body, 5);
+  const file = new File([out], state.filename, { type: 'application/octet-stream', lastModified: Date.now() });
+  window.saveConverter.loadFile(file, false);
+}
+
 function performDownload() {
   if (!state) return;
   try {
-    const r = state.root;
-    // Devices
-    for (const d of state.devices) {
-      if (!d.nm) continue;
-      d.dev.set(d.nameKey, d.nm.value);
-      if (d.dev.has('display_name_plain')) d.dev.set('display_name_plain', d.pl.value);
-    }
-    // Customers
-    for (const c of state.customers) {
-      if (!c.nm) continue;
-      c.inner.set('name', c.nm.value);
-      const hp = parseFloat(c.hp.value); if (!isNaN(hp)) c.entry.set('health', new F(Math.min(1, Math.max(0, hp))));
-      const pm = parseFloat(c.pm.value); if (!isNaN(pm) && pm >= 0) c.entry.set('price_multiplier', new F(pm));
-      c.entry.set('on_probation', c.pr.checked);
-      const sla = parseInt(c.sla.value); if (!isNaN(sla) && sla >= 0) c.entry.set('sla_credits', sla);
-    }
-    // Player
-    for (const f of PLAYER_FIELDS) {
-      if (!f.input || !r.has(f.key)) continue;
-      const orig = r.get(f.key);
-      if (f.kind === 'bool') r.set(f.key, f.input.checked);
-      else if (f.kind === 'money') {
-        const e = parseFloat(f.input.value);
-        if (!isNaN(e) && e >= 0) r.set(f.key, BigInt(Math.round(e * 100)) * (SCALE / 100n));
-      } else if (f.kind === 'float') {
-        const v = parseFloat(f.input.value);
-        if (!isNaN(v)) r.set(f.key, new F(v));
-      } else if (f.kind === 'int') {
-        const v = parseInt(f.input.value);
-        if (!isNaN(v) && v >= 0) r.set(f.key, v);
-      } else if (f.kind === 'text') {
-        if (f.input.value) r.set(f.key, f.input.value);
-      }
-      void orig;
-    }
-    // Tuning (kept in sync between config + base_config)
-    for (const t of tuningRows) {
-      let v;
-      if (t.isB) v = t.inp.checked;
-      else {
-        const p = parseFloat(t.inp.value); if (isNaN(p)) continue;
-        v = t.isF ? new F(p) : (Number.isInteger(p) ? p : new F(p));
-      }
-      t.cfgT.set(t.k, v);
-      if (t.baseT instanceof Map && t.baseT.has(t.k)) t.baseT.set(t.k, v);
-    }
-    // Statistics
-    for (const s of statInputs) {
-      const e = parseFloat(s.inp.value);
-      if (!isNaN(e) && e >= 0) r.set(s.key, BigInt(Math.round(e * 100)) * (SCALE / 100n));
-    }
+    const r = commitEditorChanges();
     // Encode
     const body = mpEncode(r);
     const out = new Uint8Array(5 + body.length);
@@ -2465,6 +2611,553 @@ drop.addEventListener('drop', e => {
   if (meta) loadMetaFile(meta, true);
   else tryAutoLoadMeta(entry);
 });
+</script>
+
+<script>
+// ============ Round-trip JSON Converter ============
+(() => {
+const MAGIC = new Uint8Array([0x43, 0x53, 0x49, 0x4d]);
+    const RESERVED_TAGS = new Set(["$msgpackBinary", "$msgpackInt", "$msgpackFloat", "$msgpackExt", "$msgpackMap"]);
+    const utf8Decoder = new TextDecoder("utf-8", { fatal: true });
+    const utf8Encoder = new TextEncoder();
+
+    class MsgPackReader {
+      constructor(bytes) {
+        this.bytes = bytes;
+        this.view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+        this.offset = 0;
+      }
+
+      ensure(length) {
+        if (this.offset + length > this.bytes.length) throw new Error("Unexpected end of MessagePack data");
+      }
+
+      byte() { this.ensure(1); return this.bytes[this.offset++]; }
+      uint16() { this.ensure(2); const value = this.view.getUint16(this.offset); this.offset += 2; return value; }
+      uint32() { this.ensure(4); const value = this.view.getUint32(this.offset); this.offset += 4; return value; }
+      int8() { this.ensure(1); const value = this.view.getInt8(this.offset); this.offset++; return value; }
+      int16() { this.ensure(2); const value = this.view.getInt16(this.offset); this.offset += 2; return value; }
+      int32() { this.ensure(4); const value = this.view.getInt32(this.offset); this.offset += 4; return value; }
+      uint64() { this.ensure(8); const value = this.view.getBigUint64(this.offset); this.offset += 8; return this.safeInteger(value); }
+      int64() { this.ensure(8); const value = this.view.getBigInt64(this.offset); this.offset += 8; return this.safeInteger(value); }
+      safeInteger(value) {
+        return value <= BigInt(Number.MAX_SAFE_INTEGER) && value >= BigInt(Number.MIN_SAFE_INTEGER)
+          ? Number(value)
+          : value;
+      }
+      bytesOf(length) {
+        this.ensure(length);
+        const value = this.bytes.slice(this.offset, this.offset + length);
+        this.offset += length;
+        return value;
+      }
+      string(length) { return utf8Decoder.decode(this.bytesOf(length)); }
+      array(length) { return Array.from({ length }, () => this.read()); }
+      map(length) {
+        const entries = [];
+        for (let index = 0; index < length; index++) entries.push([this.read(), this.read()]);
+        return { $rawMap: entries };
+      }
+      ext(length) {
+        const type = this.int8();
+        return { $rawExt: { type, data: this.bytesOf(length) } };
+      }
+
+      read() {
+        const prefix = this.byte();
+        if (prefix <= 0x7f) return prefix;
+        if (prefix >= 0xe0) return prefix - 0x100;
+        if ((prefix & 0xf0) === 0x80) return this.map(prefix & 0x0f);
+        if ((prefix & 0xf0) === 0x90) return this.array(prefix & 0x0f);
+        if ((prefix & 0xe0) === 0xa0) return this.string(prefix & 0x1f);
+
+        switch (prefix) {
+          case 0xc0: return null;
+          case 0xc2: return false;
+          case 0xc3: return true;
+          case 0xc4: return this.bytesOf(this.byte());
+          case 0xc5: return this.bytesOf(this.uint16());
+          case 0xc6: return this.bytesOf(this.uint32());
+          case 0xc7: return this.ext(this.byte());
+          case 0xc8: return this.ext(this.uint16());
+          case 0xc9: return this.ext(this.uint32());
+          case 0xca: this.ensure(4); { const value = this.view.getFloat32(this.offset); this.offset += 4; return value; }
+          case 0xcb: this.ensure(8); { const value = this.view.getFloat64(this.offset); this.offset += 8; return value; }
+          case 0xcc: return this.byte();
+          case 0xcd: return this.uint16();
+          case 0xce: return this.uint32();
+          case 0xcf: return this.uint64();
+          case 0xd0: return this.int8();
+          case 0xd1: return this.int16();
+          case 0xd2: return this.int32();
+          case 0xd3: return this.int64();
+          case 0xd4: return this.ext(1);
+          case 0xd5: return this.ext(2);
+          case 0xd6: return this.ext(4);
+          case 0xd7: return this.ext(8);
+          case 0xd8: return this.ext(16);
+          case 0xd9: return this.string(this.byte());
+          case 0xda: return this.string(this.uint16());
+          case 0xdb: return this.string(this.uint32());
+          case 0xdc: return this.array(this.uint16());
+          case 0xdd: return this.array(this.uint32());
+          case 0xde: return this.map(this.uint16());
+          case 0xdf: return this.map(this.uint32());
+          default: throw new Error(`Unsupported MessagePack prefix 0x${prefix.toString(16)}`);
+        }
+      }
+    }
+
+    class MsgPackWriter {
+      constructor() { this.parts = []; this.length = 0; }
+      push(bytes) { this.parts.push(bytes); this.length += bytes.length; }
+      one(value) { this.push(Uint8Array.of(value)); }
+      numeric(prefix, method, byteLength, value) {
+        const bytes = new Uint8Array(1 + byteLength);
+        bytes[0] = prefix;
+        new DataView(bytes.buffer)[method](1, value);
+        this.push(bytes);
+      }
+      header(prefix8, prefix16, prefix32, length) {
+        if (length <= 0xff) this.push(Uint8Array.of(prefix8, length));
+        else if (length <= 0xffff) this.numeric(prefix16, "setUint16", 2, length);
+        else this.numeric(prefix32, "setUint32", 4, length);
+      }
+      string(value) {
+        const bytes = utf8Encoder.encode(value);
+        if (bytes.length <= 31) this.one(0xa0 | bytes.length);
+        else this.header(0xd9, 0xda, 0xdb, bytes.length);
+        this.push(bytes);
+      }
+      integer(value) {
+        if (typeof value === "number") {
+          if (value >= 0 && value <= 0x7f) return this.one(value);
+          if (value < 0 && value >= -32) return this.one(0x100 + value);
+          if (value >= 0 && value <= 0xff) return this.push(Uint8Array.of(0xcc, value));
+          if (value >= 0 && value <= 0xffff) return this.numeric(0xcd, "setUint16", 2, value);
+          if (value >= 0 && value <= 0xffffffff) return this.numeric(0xce, "setUint32", 4, value);
+          if (value >= -128 && value < 0) return this.numeric(0xd0, "setInt8", 1, value);
+          if (value >= -32768 && value < 0) return this.numeric(0xd1, "setInt16", 2, value);
+          if (value >= -2147483648 && value < 0) return this.numeric(0xd2, "setInt32", 4, value);
+          value = BigInt(value);
+        }
+        if (value >= 0n && value <= 0xffffffffffffffffn) return this.numeric(0xcf, "setBigUint64", 8, value);
+        if (value >= -0x8000000000000000n && value < 0n) return this.numeric(0xd3, "setBigInt64", 8, value);
+        throw new Error(`Integer ${value} is outside the MessagePack 64-bit range`);
+      }
+      binary(bytes) { this.header(0xc4, 0xc5, 0xc6, bytes.length); this.push(bytes); }
+      ext(type, bytes) {
+        const fixedPrefixes = new Map([[1, 0xd4], [2, 0xd5], [4, 0xd6], [8, 0xd7], [16, 0xd8]]);
+        if (fixedPrefixes.has(bytes.length)) this.one(fixedPrefixes.get(bytes.length));
+        else this.header(0xc7, 0xc8, 0xc9, bytes.length);
+        this.one(type & 0xff);
+        this.push(bytes);
+      }
+      array(values) {
+        if (values.length <= 15) this.one(0x90 | values.length);
+        else if (values.length <= 0xffff) this.numeric(0xdc, "setUint16", 2, values.length);
+        else this.numeric(0xdd, "setUint32", 4, values.length);
+        for (const value of values) this.write(value);
+      }
+      map(entries) {
+        if (entries.length <= 15) this.one(0x80 | entries.length);
+        else if (entries.length <= 0xffff) this.numeric(0xde, "setUint16", 2, entries.length);
+        else this.numeric(0xdf, "setUint32", 4, entries.length);
+        for (const [key, value] of entries) { this.write(key); this.write(value); }
+      }
+      write(value) {
+        if (value === null) return this.one(0xc0);
+        if (value === false) return this.one(0xc2);
+        if (value === true) return this.one(0xc3);
+        if (typeof value === "string") return this.string(value);
+        if (typeof value === "bigint" || (typeof value === "number" && Number.isInteger(value))) return this.integer(value);
+        if (typeof value === "number") return this.numeric(0xcb, "setFloat64", 8, value);
+        if (value instanceof Uint8Array) return this.binary(value);
+        if (Array.isArray(value)) return this.array(value);
+        if (value && value.$rawExt) return this.ext(value.$rawExt.type, value.$rawExt.data);
+        if (value && value.$rawMap) return this.map(value.$rawMap);
+        throw new Error("JSON contains a value that cannot be encoded as MessagePack");
+      }
+      finish() {
+        const output = new Uint8Array(this.length);
+        let offset = 0;
+        for (const part of this.parts) { output.set(part, offset); offset += part.length; }
+        return output;
+      }
+    }
+
+    function bytesToBase64(bytes) {
+      let binary = "";
+      for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+        binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+      }
+      return btoa(binary);
+    }
+
+    function base64ToBytes(value) {
+      const binary = atob(value);
+      return Uint8Array.from(binary, character => character.charCodeAt(0));
+    }
+
+    function toJsonValue(value) {
+      if (typeof value === "bigint") return { $msgpackInt: value.toString() };
+      if (typeof value === "number" && !Number.isFinite(value)) return { $msgpackFloat: String(value) };
+      if (value instanceof Uint8Array) return { $msgpackBinary: bytesToBase64(value) };
+      if (Array.isArray(value)) return value.map(toJsonValue);
+      if (value && value.$rawExt) {
+        return { $msgpackExt: { type: value.$rawExt.type, data: bytesToBase64(value.$rawExt.data) } };
+      }
+      if (value && value.$rawMap) {
+        const converted = value.$rawMap.map(([key, item]) => [toJsonValue(key), toJsonValue(item)]);
+        const keys = converted.map(([key]) => key);
+        const plainObjectSafe = keys.every(key => typeof key === "string")
+          && new Set(keys).size === keys.length
+          && !keys.some(key => RESERVED_TAGS.has(key));
+        if (plainObjectSafe) return Object.fromEntries(converted);
+        return { $msgpackMap: converted };
+      }
+      return value;
+    }
+
+    function fromJsonValue(value) {
+      if (Array.isArray(value)) return value.map(fromJsonValue);
+      if (!value || typeof value !== "object") return value;
+      const keys = Object.keys(value);
+      if (keys.length === 1 && keys[0] === "$msgpackInt") return BigInt(value.$msgpackInt);
+      if (keys.length === 1 && keys[0] === "$msgpackFloat") return Number(value.$msgpackFloat);
+      if (keys.length === 1 && keys[0] === "$msgpackBinary") return base64ToBytes(value.$msgpackBinary);
+      if (keys.length === 1 && keys[0] === "$msgpackExt") {
+        return { $rawExt: { type: value.$msgpackExt.type, data: base64ToBytes(value.$msgpackExt.data) } };
+      }
+      if (keys.length === 1 && keys[0] === "$msgpackMap") {
+        return { $rawMap: value.$msgpackMap.map(([key, item]) => [fromJsonValue(key), fromJsonValue(item)]) };
+      }
+      return { $rawMap: Object.entries(value).map(([key, item]) => [key, fromJsonValue(item)]) };
+    }
+
+    function getSaveVersion(bytes) {
+      if (bytes.length < 5 || !MAGIC.every((byte, index) => bytes[index] === byte)) {
+        throw new Error("This is not a CSIM save file");
+      }
+      return String(bytes[4]);
+    }
+
+    function decodeSave(bytes) {
+      const version = getSaveVersion(bytes);
+      const reader = new MsgPackReader(bytes.subarray(5));
+      const result = reader.read();
+      if (reader.offset !== reader.bytes.length) throw new Error(`Save has ${reader.bytes.length - reader.offset} trailing bytes`);
+      const json = toJsonValue(result);
+      if (!json || Array.isArray(json) || typeof json !== "object") throw new Error("The CSIM payload root is not a JSON object");
+      return { $csimVersion: Number(version), ...json };
+    }
+
+    function saveVersionByte(version) {
+      if (version === "legacy") return 32;
+      const numericVersion = Number(version);
+      if (!Number.isInteger(numericVersion) || numericVersion < 0 || numericVersion > 255) {
+        throw new Error("JSON must contain a $csimVersion integer between 0 and 255");
+      }
+      // JSON exported by earlier converter builds used 5-10 for header bytes 53-58.
+      return numericVersion >= 5 && numericVersion <= 10 ? numericVersion + 48 : numericVersion;
+    }
+
+    function encodeSave(json) {
+      const version = json?.$csimVersion;
+      const headerVersion = saveVersionByte(version);
+      const payloadJson = { ...json };
+      delete payloadJson.$csimVersion;
+      const writer = new MsgPackWriter();
+      writer.write(fromJsonValue(payloadJson));
+      const payload = writer.finish();
+      const output = new Uint8Array(5 + payload.length);
+      output.set(MAGIC);
+      output[4] = headerVersion;
+      output.set(payload, 5);
+      return output;
+    }
+
+    function buildMetadata(json, version, slot) {
+      const siteNames = {
+        garage: "Garage",
+        basement: "Basement",
+        small_colo: "Data Center",
+        datacenter: "Data Center",
+        campus: "Campus"
+      };
+      const scenarioTitles = { "arm-race": "The ARM Race" };
+      const site = siteNames[json.current_site] || json.current_site || "Unknown";
+      const customerData = json.customers;
+      const customerEntries = customerData?.$msgpackMap;
+      const activeCustomers = Array.isArray(customerEntries)
+        ? customerEntries.filter(([, customer]) => customer?.lifecycle === "Active").length
+        : 0;
+      const customers = Array.isArray(customerEntries)
+        ? activeCustomers || customerEntries.length
+        : customerData && typeof customerData === "object"
+          ? Object.keys(customerData).length
+          : 0;
+      const timestamp = Math.floor(Date.now() / 1000);
+      const threadSuffix = slot.replace(/^(manual|autosave)-/, "").replace(/[^a-z0-9-]/gi, "-").slice(0, 24);
+      return {
+        cash: typeof json.cash === "number" ? json.cash / 100000000 : 0,
+        customers,
+        day: typeof json.current_day_idx === "number" ? json.current_day_idx + 1 : 1,
+        edition: json.edition || "store",
+        hard_mode: Boolean(json.hard_mode),
+        kind: slot.startsWith("autosave-") ? "autosave" : "manual",
+        meta_version: 3,
+        note: `${site} Save`,
+        save_version: saveVersionByte(version),
+        saved_at: timestamp,
+        scenario_id: json.scenario_id || "unknown",
+        scenario_title: json.scenario_title || scenarioTitles[json.scenario_id] || json.scenario_id || "Unknown",
+        site,
+        slot,
+        thread_id: json.thread_id || `t-${threadSuffix || timestamp}`
+      };
+    }
+
+    const fileInput = document.querySelector("#converterFile");
+    const dropZone = document.querySelector("#converterDrop");
+    const editor = document.querySelector("#converterText");
+    const status = document.querySelector("#converterStatus");
+    const fileName = document.querySelector("#converterFileName");
+    const fileMeta = document.querySelector("#converterFileMeta");
+    const lineCount = document.querySelector("#converterLines");
+    const searchInput = document.querySelector("#converterSearch");
+    const matchCount = document.querySelector("#converterMatch");
+    const previousMatch = document.querySelector("#converterPrevious");
+    const nextMatch = document.querySelector("#converterNext");
+    const searchHighlight = document.querySelector("#converterHighlight");
+    const downloadJson = document.querySelector("#converterDownloadJson");
+    const downloadSave = document.querySelector("#converterDownloadSave");
+    const formatJson = document.querySelector("#converterFormat");
+    let baseName = "uptime-save";
+    let loadedFileKey = "";
+    let searchMatches = [];
+    let activeMatch = -1;
+    let searchNavigationMode = false;
+    let editorLineCount = 1;
+
+    function setStatus(message, kind = "") {
+      status.textContent = message;
+      status.className = `converter-status ${kind}`;
+    }
+
+    function updateEditorState() {
+      const hasText = editor.value.trim().length > 0;
+      downloadJson.disabled = !hasText;
+      downloadSave.disabled = !hasText;
+      formatJson.disabled = !hasText;
+      editorLineCount = hasText ? editor.value.split("\n").length : 1;
+      lineCount.textContent = `${hasText ? editorLineCount : 0} lines`;
+    }
+
+    function renderedLineHeight(style = getComputedStyle(editor)) {
+      const cssLineHeight = Number.parseFloat(style.lineHeight) || 19.2;
+      if (editor.scrollHeight <= editor.clientHeight) return cssLineHeight;
+      const verticalPadding = (Number.parseFloat(style.paddingTop) || 0) + (Number.parseFloat(style.paddingBottom) || 0);
+      return (editor.scrollHeight - verticalPadding) / editorLineCount;
+    }
+
+    function updateSearch(resetPosition = true) {
+      const query = searchInput.value;
+      searchMatches = [];
+      if (query) {
+        const haystack = editor.value.toLocaleLowerCase();
+        const needle = query.toLocaleLowerCase();
+        let offset = 0;
+        while ((offset = haystack.indexOf(needle, offset)) !== -1) {
+          searchMatches.push(offset);
+          offset += Math.max(needle.length, 1);
+        }
+      }
+      if (resetPosition) activeMatch = searchMatches.length ? 0 : -1;
+      else if (activeMatch >= searchMatches.length) activeMatch = searchMatches.length - 1;
+      matchCount.textContent = `${activeMatch + 1} / ${searchMatches.length}`;
+      previousMatch.disabled = !searchMatches.length;
+      nextMatch.disabled = !searchMatches.length;
+      if (!searchMatches.length) {
+        searchNavigationMode = false;
+        document.querySelector(".converter-search").classList.remove("search-active");
+        searchHighlight.style.display = "none";
+      }
+    }
+
+    function positionHighlight() {
+      if (activeMatch < 0 || !searchMatches.length) {
+        searchHighlight.style.display = "none";
+        return;
+      }
+      const start = searchMatches[activeMatch];
+      const lineStart = editor.value.lastIndexOf("\n", start - 1) + 1;
+      const lineNumber = editor.value.slice(0, lineStart).split("\n").length - 1;
+      const style = getComputedStyle(editor);
+      const lineHeight = renderedLineHeight(style);
+      const canvas = positionHighlight.canvas || (positionHighlight.canvas = document.createElement("canvas"));
+      const context = canvas.getContext("2d");
+      context.font = style.font;
+      const columnWidth = context.measureText(editor.value.slice(lineStart, start)).width;
+      const paddingLeft = Number.parseFloat(style.paddingLeft) || 0;
+      const paddingTop = Number.parseFloat(style.paddingTop) || 0;
+      const matchWidth = context.measureText(editor.value.slice(start, start + searchInput.value.length)).width;
+      searchHighlight.textContent = "";
+      searchHighlight.style.left = `${paddingLeft + columnWidth - editor.scrollLeft}px`;
+      searchHighlight.style.top = `${paddingTop + lineNumber * lineHeight - editor.scrollTop}px`;
+      searchHighlight.style.width = `${matchWidth}px`;
+      searchHighlight.style.height = `${lineHeight}px`;
+      searchHighlight.style.display = "block";
+    }
+
+    function showMatch(direction = 0) {
+      if (!searchMatches.length) return;
+      activeMatch = (activeMatch + direction + searchMatches.length) % searchMatches.length;
+      const start = searchMatches[activeMatch];
+      const lineStart = editor.value.lastIndexOf("\n", start - 1) + 1;
+      const lineNumber = editor.value.slice(0, lineStart).split("\n").length - 1;
+      const style = getComputedStyle(editor);
+      const lineHeight = renderedLineHeight(style);
+      const canvas = positionHighlight.canvas || (positionHighlight.canvas = document.createElement("canvas"));
+      const context = canvas.getContext("2d");
+      context.font = style.font;
+      const columnWidth = context.measureText(editor.value.slice(lineStart, start)).width;
+      const pageLeft = window.scrollX;
+      const pageTop = window.scrollY;
+      editor.focus({ preventScroll: true });
+      editor.scrollTop = Math.max(0, lineNumber * lineHeight - editor.clientHeight / 2);
+      editor.scrollLeft = Math.max(0, columnWidth - editor.clientWidth / 2);
+      editor.setSelectionRange(start, start + searchInput.value.length);
+      window.scrollTo(pageLeft, pageTop);
+      searchNavigationMode = true;
+      document.querySelector(".converter-search").classList.add("search-active");
+      matchCount.textContent = `${activeMatch + 1} / ${searchMatches.length}`;
+    }
+
+    function download(bytes, name, type) {
+      const url = URL.createObjectURL(new Blob([bytes], { type }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = name;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function loadFile(file, syncEditor = true) {
+      const fileKey = `${file.name}:${file.size}:${file.lastModified}`;
+      if (loadedFileKey === fileKey) return;
+      loadedFileKey = fileKey;
+      try {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        baseName = file.name.replace(/\.(save|bak|json)$/i, "") || "uptime-save";
+        if (file.name.toLowerCase().endsWith(".json")) {
+          const parsed = JSON.parse(utf8Decoder.decode(bytes));
+          editor.value = JSON.stringify(parsed, null, 2);
+          setStatus("JSON loaded", "ok");
+        } else {
+          const detectedVersion = getSaveVersion(bytes);
+          editor.value = JSON.stringify(decodeSave(bytes), null, 2);
+          setStatus(`Uptime Save Version ${detectedVersion} decoded`, "ok");
+          if (syncEditor) window.loadEditorSave?.(file);
+        }
+        fileName.textContent = file.name;
+        fileMeta.textContent = `${(file.size / 1024).toFixed(1)} KB`;
+        updateEditorState();
+        updateSearch();
+      } catch (error) {
+        loadedFileKey = "";
+        setStatus(error.message, "error");
+      }
+    }
+
+    function syncEditorFromJson() {
+      if (!editor.value.trim()) return true;
+      try {
+        const bytes = encodeSave(JSON.parse(editor.value));
+        const file = new File([bytes], `${baseName}.save`, {
+          type: "application/octet-stream",
+          lastModified: Date.now()
+        });
+        window.loadEditorSave?.(file, { force: true, showMetaPrompt: false });
+        setStatus("JSON changes applied to visual editor", "ok");
+        return true;
+      } catch (error) {
+        setStatus(`Could not apply JSON: ${error.message}`, "error");
+        return false;
+      }
+    }
+
+    fileInput.addEventListener("change", () => fileInput.files[0] && loadFile(fileInput.files[0]));
+    editor.addEventListener("input", () => { updateEditorState(); updateSearch(false); });
+    editor.addEventListener("mousedown", () => {
+      searchNavigationMode = false;
+      document.querySelector(".converter-search").classList.remove("search-active");
+    });
+    editor.addEventListener("keydown", event => {
+      if (!searchNavigationMode || event.ctrlKey || event.altKey || event.metaKey) return;
+      if (event.key === "Enter" || event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        showMatch(event.shiftKey || event.key === "ArrowUp" ? -1 : 1);
+      } else if (event.key === "Backspace") {
+        event.preventDefault();
+        searchInput.value = searchInput.value.slice(0, -1);
+        searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+      } else if (event.key.length === 1) {
+        event.preventDefault();
+        searchInput.value += event.key;
+        searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+    });
+    searchInput.addEventListener("input", () => { updateSearch(); showMatch(); });
+    searchInput.addEventListener("keydown", event => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      showMatch(event.shiftKey ? -1 : 1);
+    });
+    previousMatch.addEventListener("mousedown", event => event.preventDefault());
+    nextMatch.addEventListener("mousedown", event => event.preventDefault());
+    previousMatch.addEventListener("click", () => showMatch(-1));
+    nextMatch.addEventListener("click", () => showMatch(1));
+    editor.addEventListener("scroll", positionHighlight);
+    window.addEventListener("resize", positionHighlight);
+    for (const eventName of ["dragenter", "dragover"]) {
+      dropZone.addEventListener(eventName, event => { event.preventDefault(); dropZone.classList.add("dragging"); });
+    }
+    for (const eventName of ["dragleave", "drop"]) {
+      dropZone.addEventListener(eventName, event => { event.preventDefault(); dropZone.classList.remove("dragging"); });
+    }
+    dropZone.addEventListener("drop", event => event.dataTransfer.files[0] && loadFile(event.dataTransfer.files[0]));
+
+    formatJson.addEventListener("click", () => {
+      try {
+        editor.value = JSON.stringify(JSON.parse(editor.value), null, 2);
+        updateEditorState();
+        updateSearch();
+        setStatus("JSON formatted", "ok");
+      } catch (error) { setStatus(`Invalid JSON: ${error.message}`, "error"); }
+    });
+
+    downloadJson.addEventListener("click", () => {
+      try {
+        const formatted = JSON.stringify(JSON.parse(editor.value), null, 2);
+        download(utf8Encoder.encode(formatted), `${baseName}.json`, "application/json");
+        setStatus("JSON downloaded", "ok");
+      } catch (error) { setStatus(`Invalid JSON: ${error.message}`, "error"); }
+    });
+
+    downloadSave.addEventListener("click", () => {
+      try {
+        const json = JSON.parse(editor.value);
+        const bytes = encodeSave(json);
+        const metadata = buildMetadata(json, json.$csimVersion, baseName);
+        download(bytes, `${baseName}.save`, "application/octet-stream");
+        download(utf8Encoder.encode(`${JSON.stringify(metadata, null, 2)}\n`), `${baseName}.meta.json`, "application/json");
+        setStatus(`Uptime Save Version ${json.$csimVersion} save and metadata built`, "ok");
+      } catch (error) { setStatus(`Could not build save: ${error.message}`, "error"); }
+    });
+
+    window.saveConverter = { decodeSave, encodeSave, getSaveVersion, buildMetadata, loadFile, syncEditorFromJson };
+})();
 </script>
 </body>
 </html>
